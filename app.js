@@ -149,6 +149,7 @@
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
+          console.log(er);
           return res.send(404, er);
         } else {
           if (req.query.download === 'false') {
@@ -177,8 +178,8 @@
         download: true,
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
-            console.log(data);
         if (er) {
+          console.log(er);
           //return res.send(404, er);
         } else {
             //res.header('Content-Type', 'image/jpeg');
