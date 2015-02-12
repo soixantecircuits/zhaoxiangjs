@@ -15,7 +15,8 @@
     "fs": "fs",
     "GPhoto": "gphoto2",
     "express": "express",
-    _: "underscore"
+    _: "underscore",
+    "bodyParser": "body-parser"
 
   };
   for (id in _ref) {
@@ -57,6 +58,8 @@
   app.use(express["static"](__dirname + '/public'));
 
   //app.use(express.bodyParser());
+  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.json());
 
   app.engine('.html', require('jade').__express);
 
