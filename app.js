@@ -175,22 +175,18 @@
   ioserver.on('shoot', function() {
     if (!camera) {
       // TODO: socketio error retrieve
-      //return res.send(404, 'Camera not connected');
+      console.log(er);
     } else {
       return camera.takePicture({
-        //download: (req.query.download === 'false' ? false : true)
         download: true,
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
           console.log(er);
-            // TODO: socketio error retrieve
-          //return res.send(404, er);
+          // TODO: socketio error retrieve
         } else {
-            //res.header('Content-Type', 'image/jpeg');
             lastPicture =  data;
             console.log('lastPicture: ' + lastPicture);
-            //return res.send("/download" + lastPicture);
         }
       });
     }
