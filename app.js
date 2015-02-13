@@ -137,7 +137,7 @@
     }
   });
   app.get('/lastPicture', function(req, res) {
-            res.header('Content-Type', 'image/jpeg');
+            res.header('Content-Type', 'text/plain');
             console.log('lastPicture: ' + lastPicture);
             return res.send("/download" + lastPicture);
   });
