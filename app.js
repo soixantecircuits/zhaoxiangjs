@@ -171,8 +171,9 @@
     }
   });
 
-  ioserver.on('chat message', function() {
+  ioserver.on('shoot', function() {
     if (!camera) {
+      // TODO: socketio error retrieve
       //return res.send(404, 'Camera not connected');
     } else {
       return camera.takePicture({
@@ -182,6 +183,7 @@
       }, function(er, data) {
             console.log(data);
         if (er) {
+            // TODO: socketio error retrieve
           //return res.send(404, er);
         } else {
             //res.header('Content-Type', 'image/jpeg');
