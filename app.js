@@ -132,15 +132,16 @@
           for (var i = 0; i < diffs.length; i++) {
             var d = diffs[i];
             if(d.kind === 'E' && d.path[d.path.length - 1] == 'value'){
-              console.log(d);
               camera.setConfigValue(d.path[d.path.length - 2], d.rhs, function (err){
                 if (err) {
                   return res.send(404, JSON.stringify(err));
+                } else {
+                  console.log(d.path[d.path.length - 2], 'changed to:', d.rhs);
                 }
               });
             }
-            return res.send(200);
           };
+          return res.send(200);
         }
       });
     }
