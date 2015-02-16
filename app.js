@@ -141,8 +141,8 @@
               });
             }
           };
-          return res.send(200);
         }
+        return res.send(200);
       });
     }
   });
