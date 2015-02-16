@@ -7,7 +7,8 @@
     console.log("socketio connected");
   });
   var lastPicture;
-
+  var has = require('deep-has');
+  var diff = require('deep-diff').diff;
 
   process.title = 'node-gphoto2 test program';
 
@@ -15,9 +16,9 @@
     "fs": "fs",
     "GPhoto": "gphoto2",
     "express": "express",
-    _: "underscore",
-    "bodyParser": "body-parser"
-
+    _: "lodash",
+    "bodyParser": "body-parser",
+    "util": "util"
   };
   for (id in _ref) {
     name = _ref[id];
@@ -82,7 +83,14 @@
     }
   };
 
-  app.put('/settings/:name', function(req, res) {
+  app.get('/api/status', function(req, res){
+    var status = {
+      camera: camera.model || 'Not connected'
+    }
+    return res.send(JSON.stringify(status));
+  })
+
+  app.put('/api/settings/:name', function(req, res) {
     if (!camera) {
       return res.send(404, 'Camera not connected');
     } else {
@@ -96,7 +104,49 @@
     }
   });
 
-  app.get('/settings', function(req, res) {
+  app.get('/api/settings/:name', function(req, res) {
+    if (!camera) {
+      return res.send(404, 'Camera not connected');
+    } else {
+      camera.getConfig(function(er, settings) {
+        if (er) {
+          return res.send(404, JSON.stringify(er));
+        } else {
+          var setting = has(settings, req.params.name);
+          return res.send(_.values(has(setting, 'value')[0])[0]);
+        }
+      });
+    }
+  });
+
+  app.put('/api/settings', function(req, res) {
+    if (!camera) {
+      return res.send(404, 'Camera not connected');
+    } else {
+      var _settings = JSON.parse(req.body.settings);
+      camera.getConfig(function (err, settings) {
+        if(err){
+          console.log(err);
+        } else {
+          var diffs = diff(settings, _settings);
+          for (var i = 0; i < diffs.length; i++) {
+            var d = diffs[i];
+            if(d.kind === 'E' && d.path[d.path.length - 1] == 'value'){
+              console.log(d);
+              camera.setConfigValue(d.path[d.path.length - 2], d.rhs, function (err){
+                if (err) {
+                  return res.send(404, JSON.stringify(err));
+                }
+              });
+            }
+            return res.send(200);
+          };
+        }
+      });
+    }
+  });
+
+  app.get('/api/settings', function(req, res) {
     if (!camera) {
       return res.send(404, 'Camera not connected');
     } else {
@@ -106,29 +156,18 @@
     }
   });
 
-  app.get('/download/*', function(req, res) {
+  app.get('/api/download/*', function(req, res) {
     var match, path;
     if (!camera) {
       return res.send(404, 'Camera not connected');
     } else {
-      if ((match = req.url.match(/download(.*)$/)) && (path = match[1])) {
+      if ((match = req.url.match(/api\/download(.*)$/)) && (path = match[1])) {
         console.log("trying to DL " + path);
-        /*
-        return camera.downloadPicture({
-          cameraPath: path
-        }, function(er, data) {
-          if (er) {
-            return res.send(404, er);
-          } else {
-            res.header('Content-Type', 'image/jpeg');
-            return res.send(data);
-          }
-        });
-        */
         return fs.readFile(path, function (er, data) {
           if (er) {
             return res.send(404, er);
           } else {
+            var format = (req.params.format != null) ? req.params.format : 'jpeg';
             res.header('Content-Type', 'image/jpeg');
             return res.send(data);
           }
@@ -136,19 +175,19 @@
       }
     }
   });
-  app.get('/lastPicture', function(req, res) {
-            res.header('Content-Type', 'text/plain');
-            console.log('lastPicture: ' + lastPicture);
-            return res.send("/download" + lastPicture);
+
+  app.get('/api/lastpicture/', function(req, res) {
+    var format = (req.params.format != null) ? req.params.format : 'jpeg';
+    res.header('Content-Type', 'text/plain');
+    console.log('lastPicture: ' + lastPicture);
+    return res.send(lastPicture);
   });
 
-  app.get('/takePicture', function(req, res) {
+  app.get('/api/shoot/', function(req, res) {
     if (!camera) {
       return res.send(404, 'Camera not connected');
     } else {
       return camera.takePicture({
-        download: (req.query.download === 'false' ? false : true),
-        //download: true,
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
@@ -158,14 +197,12 @@
           if (req.query.download === 'false') {
             lastPicture =  data;
             console.log('lastPicture: ' + lastPicture);
-            return res.send("/download" + lastPicture);
+            return res.send("/api/download" + lastPicture);
           } else {
             res.header('Content-Type', 'image/jpeg');
             lastPicture =  data;
             console.log('lastPicture: ' + lastPicture);
-            return res.send("/download" + lastPicture);
-            //return res.send(data);
-            //return res.send("/download" + data);
+            return res.send("/api/download" + lastPicture);
           }
         }
       });
@@ -193,7 +230,7 @@
   });
 
 
-  app.get('/preview*', function(req, res) {
+  app.get('/api/preview/:format', function(req, res) {
     if (!camera) {
       return res.send(404, 'Camera not connected');
     } else {
@@ -212,7 +249,7 @@
             listener = tmp[_i];
             if (!er) {
               listener.writeHead(200, {
-                'Content-Type': 'image/jpeg',
+                'Content-Type': 'image/' + req.params.format,
                 'Content-Length': data.length
               });
               listener.write(data);
