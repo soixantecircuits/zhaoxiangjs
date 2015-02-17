@@ -7,6 +7,7 @@
     console.log("socketio connected");
   });
   var lastPicture;
+  var is_streaming = false;
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
 
@@ -18,7 +19,8 @@
     "express": "express",
     _: "lodash",
     "bodyParser": "body-parser",
-    "util": "util"
+    "util": "util",
+    "mkdirp": "mkdirp"
   };
   for (id in _ref) {
     name = _ref[id];
@@ -34,6 +36,10 @@
   preview_listeners = [];
 
   camera = void 0;
+
+  mkdirp('/tmp/stream', function(err) { 
+    if (err) console.error(err)
+  });
 
   gphoto.list(function(cameras) {
     console.log("found " + cameras.length + " cameras");
@@ -227,6 +233,46 @@
             console.log('lastPicture: ' + lastPicture);
         }
       });
+    }
+  });
+
+  var stream = function(){
+      return camera.takePicture({
+        preview: true,
+        targetPath: '/tmp/stream/foo.XXXXXXX'
+      }, function(er, data) {
+        if (er) {
+          console.log(er);
+        }
+        else {
+          // success
+        }
+        // TODO: stop retrying after many errors
+        if (is_streaming){
+          setTimeout(stream(), 0);
+        }
+      });
+
+  };
+
+  app.get('/api/stream/stop', function(req, res) {
+    is_streaming = false;
+    if (!camera) {
+      return res.send(404, 'Camera not connected');
+    } else {
+      return res.send(200, 'Stream stopped');
+    }
+  });
+
+  app.get('/api/stream/start', function(req, res) {
+    if (!camera) {
+      return res.send(404, 'Camera not connected');
+    } else if (!is_streaming){
+      is_streaming = true;
+      setTimeout(stream(), 0);
+      return res.send(200, 'Stream started');
+    } else {
+      return res.send(404, 'Stream already started');
     }
   });
 

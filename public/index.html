@@ -2,7 +2,7 @@
 <body>
   <!--<canvas id="preview" width="1056" height="704"></canvas>-->
   <div id="imageWrap">
-    <img src="https://slack-files.com/files-pub/T024FC8Q2-F03KD9CJR-0f14e8be25/foo.xf8ymlj" alt="Main Image" id="mainImage" width="800px"/>
+    <img src="" alt="Main Image" id="mainImage" width="800px"/>
   </div>
   <div id="downloads"></div>
   <script type="text/javascript" src="//www.google.com/jsapi"></script>
@@ -22,18 +22,9 @@
             $('#mainImage').attr('src', res.text);
 
       startPreview: ()->
-        callback = @lastPicture.bind(this)
-        setInterval( callback, 1000 )
-
-        canvas = document.getElementById "preview"
-        context = canvas.getContext("2d")
-        image = new Image()
-        onload = ()->
-          context.drawImage(image, 0, 0, canvas.width, canvas.height)
-          image.src = '/api/preview'+Date.parse(new Date())
-        image.src = '/api/preview'
-        $(image).bind 'load', onload
-        onload()
+        request.get '/api/stream/start', (res) =>
+          console.log res
+        $('#mainImage').attr('src', 'http://' + window.location.hostname + ':8080' + '/?action=stream');
 
       stopPreview: ()->
         $('#img').unbind('load')

@@ -5,5 +5,9 @@ npm i
 npm start
 ```
 
-open localhost:1337
+open http://localhost:1337
+
+# Stream
+
+To see a preview stream, run mjpg_streamer, as mentioned [here](https://github.com/soixantecircuits/pyying)
 
