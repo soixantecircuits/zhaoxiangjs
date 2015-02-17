@@ -121,14 +121,7 @@
           return res.send(404, er);
         } else {
           lastPicture = data;
-          fs.readFile(lastPicture, function (er, data) {
-            if (er) {
-              return res.send(404, er);
-            } else {
-              res.header('Content-Type', 'image/' + req.params.format);
-              return res.send(data);
-            }
-          });
+          return res.send('/api/lastpicture/' + req.params.format);
         }
       });
     }
