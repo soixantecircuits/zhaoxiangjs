@@ -64,7 +64,7 @@
           'Start live preview' : ()=>
             @startPreview()
           'Take picture': ()=>
-            request.get '/api/shoot', download:true, (res)=>
+            request.get '/api/shoot/jpeg', (res)=>
               console.log res
               if res.text
                 $('#mainImage').attr('src', res.text);
