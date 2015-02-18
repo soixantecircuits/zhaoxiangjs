@@ -37,7 +37,7 @@
 
   camera = void 0;
 
-  mkdirp('/tmp/stream', function(err) { 
+  mkdirp('/tmp/stream', function(err) {
     if (err) console.error(err)
   });
 
@@ -274,7 +274,8 @@
       setTimeout(stream(), 0);
       return res.send(200, 'Stream started');
     } else {
-      return res.send(404, 'Stream already started');
+      return res.sendStatus(304);
+      // return res.send(404, 'Stream already started');
     }
   });
 
