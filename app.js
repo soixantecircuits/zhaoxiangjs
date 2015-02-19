@@ -98,9 +98,10 @@
 
   app.get('/api/status', function(req, res){
     var status = {
-      camera: camera.model || 'Not connected'
+      camera: camera.model || 'Not connected',
+      isStreaming: is_streaming
     }
-    return res.send(JSON.stringify(status));
+    res.status(200).json(status);
   });
 
   app.get('/api/shoot/', function(req, res) {
