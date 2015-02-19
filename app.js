@@ -97,8 +97,10 @@
   };
 
   app.get('/api/status', function(req, res){
+    var model = 'Not connected';
+    if (camera) model = camera.model;
     var status = {
-      camera: camera.model || 'Not connected',
+      camera: model,
       isStreaming: is_streaming
     }
     res.status(200).json(status);
