@@ -2,10 +2,46 @@
 (function() {
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
   var io = require('socket.io-client');
-  var ioserver = io.connect('http://ux31e.local:3001');
-  ioserver.on('connect', function () {
-    console.log("socketio connected");
+
+  var mdns = require('mdns');
+  var browser = mdns.createBrowser(mdns.tcp('socketio'));
+  browser.on('serviceUp', function(service) {
+    console.log("service up: ", service.host);
+    socketioInit(service.host.substr(0, service.host.length - 1), service.port);
   });
+  browser.on('serviceDown', function(service) {
+    console.log("service down: ", service.host);
+  });
+  browser.start();
+
+  function socketioInit (address, port){
+    console.log('Init socket.io client mode : ', address, port);
+    var socket = io('http://' + address + ':' + port);
+    socket
+      .on('connect', function(){
+        console.log('socketio connected.');
+      })
+      .on('shoot', function() {
+        if (!camera) {
+          // TODO: socketio error retrieve
+          console.log(er);
+        } else {
+          return camera.takePicture({
+            download: true,
+            targetPath: '/tmp/foo.XXXXXXX'
+          }, function(er, data) {
+            if (er) {
+              console.log(er);
+              // TODO: socketio error retrieve
+            } else {
+                lastPicture =  data;
+                console.log('lastPicture: ' + lastPicture);
+            }
+          });
+        }
+      });
+  }
+
   var lastPicture;
   var is_streaming = false;
   var has = require('deep-has');
@@ -224,26 +260,6 @@
           };
         }
         return res.send(200);
-      });
-    }
-  });
-
-  ioserver.on('shoot', function() {
-    if (!camera) {
-      // TODO: socketio error retrieve
-      console.log(er);
-    } else {
-      return camera.takePicture({
-        download: true,
-        targetPath: '/tmp/foo.XXXXXXX'
-      }, function(er, data) {
-        if (er) {
-          console.log(er);
-          // TODO: socketio error retrieve
-        } else {
-            lastPicture =  data;
-            console.log('lastPicture: ' + lastPicture);
-        }
       });
     }
   });
