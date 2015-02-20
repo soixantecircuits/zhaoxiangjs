@@ -2,20 +2,25 @@
 (function() {
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
   var io = require('socket.io-client');
+  var _ = require('lodash');
 
+  var services = [];
   var mdns = require('mdns');
-  var browser = mdns.createBrowser(mdns.tcp('socketio'));
-  browser.on('serviceUp', function(service) {
-    console.log("service up: ", service.host);
-    socketioInit(service.host.substr(0, service.host.length - 1), service.port);
+  var browser = mdns.createBrowser(mdns.tcp('remote'));
+  browser.on('serviceUp', function (service) {
+    console.log("service up: ", service.type.name);
+    // TODO : fix double connexion
+    if(!_.includes(services, service.type.name)){
+      services.push(service.type.name);
+      socketioInit(service.host.substr(0, service.host.length - 1), service.port);
+    }
   });
-  browser.on('serviceDown', function(service) {
-    console.log("service down: ", service.host);
+  browser.on('serviceDown', function (service) {
+    console.log("service down: ", service.type.name);
   });
   browser.start();
 
   function socketioInit (address, port){
-    console.log('Init socket.io client mode : ', address, port);
     var socket = io('http://' + address + ':' + port);
     socket
       .on('connect', function(){
