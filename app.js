@@ -52,7 +52,7 @@
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
 
-  process.title = 'node-gphoto2 test program';
+  process.title = 'zhaoxiangjs';
 
   _ref = {
     "fs": "fs",
