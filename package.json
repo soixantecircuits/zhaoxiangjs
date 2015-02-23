@@ -7,7 +7,7 @@
     "deep-diff": "^0.3.0",
     "deep-has": "0.0.1",
     "express": "^4.11.2",
-    "gphoto2": "^0.1.7",
+    "gphoto2": "emmanuelgeoffray/node-gphoto2",
     "jade": "^1.9.2",
     "lodash": "^3.2.0",
     "mdns": "2.2.6",
