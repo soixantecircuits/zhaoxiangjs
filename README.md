@@ -1,6 +1,9 @@
 app to shoot pictures with a Canon EOS
 
+# Install
+
 ```
+$ sudo apt-get install avahi-daemon libnss-mdns libavahi-compat-libdnssd-dev curl
 npm i
 npm start
 ```
