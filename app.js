@@ -29,15 +29,14 @@
       .on('shoot', function() {
         if (!camera) {
           // TODO: socketio error retrieve
-          console.log(er);
+          on_error(er);
         } else {
           return camera.takePicture({
             download: true,
             targetPath: '/tmp/foo.XXXXXXX'
           }, function(er, data) {
             if (er) {
-              last_error = er;
-              console.log(er);
+              on_error(er);
               // TODO: socketio error retrieve
             } else {
                 lastPicture =  data;
@@ -84,6 +83,17 @@
     if (err) console.error(err)
   });
 
+  on_error = function(er){
+    last_error = er;
+    console.log(er);
+    if (last_error == -7){
+      console.log("Can't connect to camera, exiting");
+      process.exit(-1);
+    }
+  }
+  
+    
+
   restart_usb = function(){
     var exec = require('child_process').exec;
     console.log("resetting usb");
@@ -111,6 +121,7 @@
     return camera.getConfig(function(er, settings) {
       if (er) {
         last_error = er;
+        console.log(er);
         console.error({
           camera_error: er
         });
@@ -180,8 +191,7 @@
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
-          last_error = er;
-          console.log(er);
+          on_error(er);
           return res.send(404, er);
         } else {
           lastPicture = data;
@@ -200,8 +210,7 @@
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
-          last_error = er;
-          console.log(er);
+          on_error(er);
           return res.send(404, er);
         } else {
           lastPicture = data;
@@ -235,7 +244,7 @@
     } else {
       camera.getConfig(function(er, settings) {
         if (er) {
-          last_error = er;
+          on_error(er);
           return res.send(404, JSON.stringify(er));
         } else {
           var setting = has(settings, req.params.name);
@@ -251,7 +260,7 @@
     } else {
       return camera.setConfigValue(req.params.name, req.body.newValue, function(er) {
         if (er) {
-          last_error = er;
+          on_error(er);
           return res.send(404, JSON.stringify(er));
         } else {
           return res.send(200);
@@ -304,7 +313,7 @@
         targetPath: '/tmp/stream/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
-          console.log(er);
+          on_error(er);
         }
         else {
           // success
