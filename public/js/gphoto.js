@@ -13,6 +13,9 @@ GPhoto = (function() {
 
   GPhoto.prototype.startPreview = function() {
     $('#mainImage').attr('src', 'http://' + window.location.hostname + ':8080' + '/?action=stream');
+    request.get('/api/stream/start', function(res){
+      console.log(res);
+    });
   };
 
   GPhoto.prototype.stopPreview = function() {
