@@ -1,6 +1,10 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+mdns = require('mdns');
+
+var ad = mdns.createAdvertisement(mdns.tcp('remote'), 3005);
+ad.start();
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
