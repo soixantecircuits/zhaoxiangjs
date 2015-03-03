@@ -26,14 +26,14 @@
       .on('connect', function(){
         console.log('socketio connected.');
       })
-      .on('shoot', function() {
+      .on('shoot', function(snap_id) {
         if (!camera) {
           // TODO: socketio error retrieve
           on_error(er);
         } else {
           return camera.takePicture({
             download: true,
-            targetPath: '/tmp/foo.XXXXXXX'
+            targetPath: '/tmp/snaps/snap-' + snap_id + '-XXXXXXX'
           }, function(er, data) {
             if (er) {
               on_error(er);
@@ -80,6 +80,9 @@
   camera = void 0;
 
   mkdirp('/tmp/stream', function(err) {
+    if (err) console.error(err)
+  });
+  mkdirp('/tmp/snaps', function(err) {
     if (err) console.error(err)
   });
 
