@@ -20,6 +20,10 @@
   });
   browser.start();
 
+  var os = require("os");
+  var host = os.hostname();
+  var cam_id = host.match(/voldenuit(.*)/)[1];
+
   function socketioInit (address, port){
     var socket = io('http://' + address + ':' + port);
     socket
@@ -33,7 +37,7 @@
         } else {
           return camera.takePicture({
             download: true,
-            targetPath: '/tmp/snaps/snap-' + snap_id + '-XXXXXXX'
+            targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
           }, function(er, data) {
             if (er) {
               on_error(er);
