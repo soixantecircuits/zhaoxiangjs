@@ -20,23 +20,27 @@
   });
   browser.start();
 
+  var os = require("os");
+  var host = os.hostname();
+  var cam_id = host.match(/voldenuit(.*)/)[1];
+
   function socketioInit (address, port){
     var socket = io('http://' + address + ':' + port);
     socket
       .on('connect', function(){
         console.log('socketio connected.');
       })
-      .on('shoot', function() {
+      .on('shoot', function(snap_id) {
         if (!camera) {
           // TODO: socketio error retrieve
-          console.log(er);
+          on_error(er);
         } else {
           return camera.takePicture({
             download: true,
-            targetPath: '/tmp/foo.XXXXXXX'
+            targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
           }, function(er, data) {
             if (er) {
-              console.log(er);
+              on_error(er);
               // TODO: socketio error retrieve
             } else {
                 lastPicture =  data;
@@ -51,6 +55,7 @@
   var is_streaming = false;
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
+  var last_error = 0;
 
   process.title = 'zhaoxiangjs';
 
@@ -81,6 +86,34 @@
   mkdirp('/tmp/stream', function(err) {
     if (err) console.error(err)
   });
+  mkdirp('/tmp/snaps', function(err) {
+    if (err) console.error(err)
+  });
+
+  on_error = function(er){
+    last_error = er;
+    console.log(er);
+    if (last_error == -7){
+      console.log("Can't connect to camera, exiting");
+      process.exit(-1);
+    }
+  }
+  
+    
+
+  restart_usb = function(){
+    var exec = require('child_process').exec;
+    console.log("resetting usb");
+    // TODO: programatically find the usb, on raspi it is 1-1.3, but it may be something else on other system
+    exec('bash reset_device.sh ' + camera.port, function(error, stdout, stderr) {
+        console.log('stdout: ' + stdout);
+        console.log('stderr: ' + stderr);
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        }
+    });
+
+  }; 
 
   gphoto.list(function(cameras) {
     console.log("found " + cameras.length + " cameras");
@@ -90,12 +123,18 @@
     if (!camera) {
       process.exit(-1);
     }
+    console.log("port: " + camera.port);
     console.log("loading " + camera.model + " settings");
     return camera.getConfig(function(er, settings) {
       if (er) {
+        last_error = er;
+        console.log(er);
         console.error({
           camera_error: er
         });
+
+        restart_usb();
+        process.exit(-1);
       }
       return console.log(settings);
     });
@@ -140,9 +179,13 @@
   app.get('/api/status', function(req, res){
     var model = 'Not connected';
     if (camera) model = camera.model;
+    var camera_stuck = false;
+    if (last_error == -7) camera_stuck = true;
     var status = {
       camera: model,
-      isStreaming: is_streaming
+      isStreaming: is_streaming,
+      last_error: last_error,
+      camera_stuck: camera_stuck
     }
     res.status(200).json(status);
   });
@@ -155,7 +198,7 @@
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
-          console.log(er);
+          on_error(er);
           return res.send(404, er);
         } else {
           lastPicture = data;
@@ -174,7 +217,7 @@
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
-          console.log(er);
+          on_error(er);
           return res.send(404, er);
         } else {
           lastPicture = data;
@@ -208,6 +251,7 @@
     } else {
       camera.getConfig(function(er, settings) {
         if (er) {
+          on_error(er);
           return res.send(404, JSON.stringify(er));
         } else {
           var setting = has(settings, req.params.name);
@@ -223,6 +267,7 @@
     } else {
       return camera.setConfigValue(req.params.name, req.body.newValue, function(er) {
         if (er) {
+          on_error(er);
           return res.send(404, JSON.stringify(er));
         } else {
           return res.send(200);
@@ -275,7 +320,7 @@
         targetPath: '/tmp/stream/foo.XXXXXXX'
       }, function(er, data) {
         if (er) {
-          console.log(er);
+          on_error(er);
         }
         else {
           // success
