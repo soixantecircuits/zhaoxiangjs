@@ -1,6 +1,7 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var crypto = require('crypto');
 mdns = require('mdns');
 
 var ad = mdns.createAdvertisement(mdns.tcp('remote'), 3005);
@@ -18,8 +19,9 @@ io.on('connection', function(socket){
       io.emit('log message', "*** user disconnected ***");
     });
     socket.on('shoot', function(msg){
-      console.log('shoot');
-      io.emit('shoot');
+      var uid = crypto.randomBytes(4).readUInt32LE(0)
+      console.log('shoot ' + uid);
+      io.emit('shoot', uid );
     });
 });
 

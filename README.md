@@ -14,3 +14,11 @@ open http://localhost:1337
 
 To see a preview stream, run mjpg_streamer, as mentioned [here](https://github.com/soixantecircuits/pyying)
 
+# Debug
+
+If something wrong with your camera, try some basic commands with the gphoto2 utility:
+
+`gphoto2 --auto-detect --list-config`
+`gphoto2 --auto-detect --capture-image-and-download`
+
+
