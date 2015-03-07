@@ -2,6 +2,9 @@
   "name": "zhaoxiangjs",
   "version": "0.0.1",
   "description": "app to shoot pictures with a Canon EOS",
+  "scripts": {
+    "start": "node app.js"
+  },
   "dependencies": {
     "body-parser": "^1.11.0",
     "deep-diff": "^0.3.0",

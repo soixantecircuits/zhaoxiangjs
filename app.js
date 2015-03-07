@@ -3,9 +3,10 @@
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
   var io = require('socket.io-client');
   var _ = require('lodash');
+  var mdns = require('mdns');
 
   var services = [];
-  var mdns = require('mdns');
+
   var browser = mdns.createBrowser(mdns.tcp('remote'));
   browser.on('serviceUp', function (service) {
     console.log("service up: ", service.type.name);
@@ -22,7 +23,13 @@
 
   var os = require("os");
   var host = os.hostname();
-  var cam_id = host.match(/voldenuit(.*)/)[1];
+  try {
+    var cam_id = host.match(/voldenuit(.*)/)[1];  
+  } catch(err){
+    console.log(err);
+    console.log('Apparently this computer is not in the team, check your hostname.');
+  }
+  
 
   function socketioInit (address, port){
     var socket = io('http://' + address + ':' + port);
@@ -99,8 +106,6 @@
     }
   }
   
-    
-
   restart_usb = function(){
     var exec = require('child_process').exec;
     console.log("resetting usb");
@@ -112,7 +117,6 @@
             console.log('exec error: ' + error);
         }
     });
-
   }; 
 
   gphoto.list(function(cameras) {
@@ -121,6 +125,7 @@
       return camera.model.match(/(Canon|Nikon)/);
     }).first().value();
     if (!camera) {
+      console.log('Exit - no camera found, sorry. :(');
       process.exit(-1);
     }
     console.log("port: " + camera.port);
