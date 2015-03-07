@@ -8,6 +8,12 @@ npm i
 npm start
 ```
 
+If you have no camera you can just run it using :
+
+```
+node app.js -f
+```
+
 open http://localhost:1337
 
 # Stream

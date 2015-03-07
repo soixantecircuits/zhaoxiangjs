@@ -4,19 +4,20 @@
   var io = require('socket.io-client');
   var _ = require('lodash');
   var mdns = require('mdns');
-
+  var argv = require('minimist')(process.argv.slice(2));
   var services = [];
 
   var browser = mdns.createBrowser(mdns.tcp('remote'));
-  browser.on('serviceUp', function (service) {
+  browser.on('serviceUp', function(service) {
     console.log("service up: ", service.type.name);
     // TODO : fix double connexion
-    if(!_.includes(services, service.type.name)){
-      services.push(service.type.name);
+    if (_.findWhere(services, {name:service.type.name, host:service.host.substr(0, service.host.length - 1), port:service.port}) === undefined) {
+      console.log('New socket.io connection with service "' + service.type.name + '" on: '+service.host.substr(0, service.host.length - 1)+':'+service.port);
+      services.push({name:service.type.name, host:service.host.substr(0, service.host.length - 1), port:service.port});
       socketioInit(service.host.substr(0, service.host.length - 1), service.port);
     }
   });
-  browser.on('serviceDown', function (service) {
+  browser.on('serviceDown', function(service) {
     console.log("service down: ", service.type.name);
   });
   browser.start();
@@ -24,17 +25,17 @@
   var os = require("os");
   var host = os.hostname();
   try {
-    var cam_id = host.match(/voldenuit(.*)/)[1];  
-  } catch(err){
+    var cam_id = host.match(/voldenuit(.*)/)[1];
+  } catch (err) {
     console.log(err);
     console.log('Apparently this computer is not in the team, check your hostname.');
   }
-  
 
-  function socketioInit (address, port){
+
+  function socketioInit(address, port) {
     var socket = io('http://' + address + ':' + port);
     socket
-      .on('connect', function(){
+      .on('connect', function() {
         console.log('socketio connected.');
       })
       .on('shoot', function(snap_id) {
@@ -46,14 +47,14 @@
             download: true,
             targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
           }, function(er, data) {
-            if (er) {
-              on_error(er);
+              if (er) {
+                on_error(er);
               // TODO: socketio error retrieve
-            } else {
-                lastPicture =  data;
+              } else {
+                lastPicture = data;
                 console.log('lastPicture: ' + lastPicture);
-            }
-          });
+              }
+            });
         }
       });
   }
@@ -97,52 +98,53 @@
     if (err) console.error(err)
   });
 
-  on_error = function(er){
+  on_error = function(er) {
     last_error = er;
     console.log(er);
-    if (last_error == -7){
+    if (last_error == -7) {
       console.log("Can't connect to camera, exiting");
       process.exit(-1);
     }
   }
-  
-  restart_usb = function(){
+
+  restart_usb = function() {
     var exec = require('child_process').exec;
     console.log("resetting usb");
     // TODO: programatically find the usb, on raspi it is 1-1.3, but it may be something else on other system
     exec('bash reset_device.sh ' + camera.port, function(error, stdout, stderr) {
-        console.log('stdout: ' + stdout);
-        console.log('stderr: ' + stderr);
-        if (error !== null) {
-            console.log('exec error: ' + error);
-        }
+      console.log('stdout: ' + stdout);
+      console.log('stderr: ' + stderr);
+      if (error !== null) {
+        console.log('exec error: ' + error);
+      }
     });
-  }; 
+  };
 
   gphoto.list(function(cameras) {
     console.log("found " + cameras.length + " cameras");
     camera = _(cameras).chain().filter(function(camera) {
       return camera.model.match(/(Canon|Nikon)/);
     }).first().value();
-    if (!camera) {
+    if (!camera && !argv.f) {
       console.log('Exit - no camera found, sorry. :(');
       process.exit(-1);
-    }
-    console.log("port: " + camera.port);
-    console.log("loading " + camera.model + " settings");
-    return camera.getConfig(function(er, settings) {
-      if (er) {
-        last_error = er;
-        console.log(er);
-        console.error({
-          camera_error: er
-        });
+    } else if (camera) {
+      console.log("port: " + camera.port);
+      console.log("loading " + camera.model + " settings");
+      return camera.getConfig(function(er, settings) {
+        if (er) {
+          last_error = er;
+          console.log(er);
+          console.error({
+            camera_error: er
+          });
 
-        restart_usb();
-        process.exit(-1);
-      }
-      return console.log(settings);
-    });
+          restart_usb();
+          process.exit(-1);
+        }
+        return console.log(settings);
+      });
+    }
   });
 
   app = express();
@@ -157,7 +159,9 @@
   app.use(express["static"](__dirname + '/public'));
 
   //app.use(express.bodyParser());
-  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.urlencoded({
+    extended: false
+  }));
   app.use(bodyParser.json());
 
   app.engine('.html', require('jade').__express);
@@ -181,11 +185,13 @@
     }
   };
 
-  app.get('/api/status', function(req, res){
+  app.get('/api/status', function(req, res) {
     var model = 'Not connected';
-    if (camera) model = camera.model;
+    if (camera)
+      model = camera.model;
     var camera_stuck = false;
-    if (last_error == -7) camera_stuck = true;
+    if (last_error == -7)
+      camera_stuck = true;
     var status = {
       camera: model,
       isStreaming: is_streaming,
@@ -202,15 +208,15 @@
       return camera.takePicture({
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
-        if (er) {
-          on_error(er);
-          return res.send(404, er);
-        } else {
-          lastPicture = data;
-          console.log('lastPicture: ' + lastPicture);
-          return res.send(lastPicture);
-        }
-      });
+          if (er) {
+            on_error(er);
+            return res.send(404, er);
+          } else {
+            lastPicture = data;
+            console.log('lastPicture: ' + lastPicture);
+            return res.send(lastPicture);
+          }
+        });
     }
   });
 
@@ -221,14 +227,14 @@
       return camera.takePicture({
         targetPath: '/tmp/foo.XXXXXXX'
       }, function(er, data) {
-        if (er) {
-          on_error(er);
-          return res.send(404, er);
-        } else {
-          lastPicture = data;
-          return res.send('/api/lastpicture/' + req.params.format);
-        }
-      });
+          if (er) {
+            on_error(er);
+            return res.send(404, er);
+          } else {
+            lastPicture = data;
+            return res.send('/api/lastpicture/' + req.params.format);
+          }
+        });
     }
   });
 
@@ -240,7 +246,7 @@
   });
 
   app.get('/api/lastpicture/:format', function(req, res) {
-    fs.readFile(lastPicture, function (er, data) {
+    fs.readFile(lastPicture, function(er, data) {
       if (er) {
         return res.send(404, er);
       } else {
@@ -296,15 +302,15 @@
       return res.send(404, 'Camera not connected');
     } else {
       var _settings = JSON.parse(req.body.settings);
-      camera.getConfig(function (err, settings) {
-        if(err){
+      camera.getConfig(function(err, settings) {
+        if (err) {
           console.log(err);
         } else {
           var diffs = diff(settings, _settings);
           for (var i = 0; i < diffs.length; i++) {
             var d = diffs[i];
-            if(d.kind === 'E' && d.path[d.path.length - 1] == 'value'){
-              camera.setConfigValue(d.path[d.path.length - 2], d.rhs, function (err){
+            if (d.kind === 'E' && d.path[d.path.length - 1] == 'value') {
+              camera.setConfigValue(d.path[d.path.length - 2], d.rhs, function(err) {
                 if (err) {
                   return res.send(404, JSON.stringify(err));
                 } else {
@@ -312,26 +318,26 @@
                 }
               });
             }
-          };
+          }
+          ;
         }
         return res.send(200);
       });
     }
   });
 
-  var stream = function(){
-      return camera.takePicture({
-        preview: true,
-        targetPath: '/tmp/stream/foo.XXXXXXX'
-      }, function(er, data) {
+  var stream = function() {
+    return camera.takePicture({
+      preview: true,
+      targetPath: '/tmp/stream/foo.XXXXXXX'
+    }, function(er, data) {
         if (er) {
           on_error(er);
-        }
-        else {
+        } else {
           // success
         }
         // TODO: stop retrying after many errors
-        if (is_streaming){
+        if (is_streaming) {
           setTimeout(stream(), 0);
         }
       });
@@ -350,7 +356,7 @@
   app.get('/api/stream/start', function(req, res) {
     if (!camera) {
       return res.send(404, 'Camera not connected');
-    } else if (!is_streaming){
+    } else if (!is_streaming) {
       is_streaming = true;
       setTimeout(stream(), 0);
       return res.send(200, 'Stream started');
@@ -370,27 +376,27 @@
         return camera.takePicture({
           preview: true
         }, function(er, data) {
-          var d, listener, tmp, _i, _len, _results;
-          logRequests();
-          tmp = preview_listeners;
-          preview_listeners = new Array();
-          d = Date.parse(new Date());
-          _results = [];
-          for (_i = 0, _len = tmp.length; _i < _len; _i++) {
-            listener = tmp[_i];
-            if (!er) {
-              listener.writeHead(200, {
-                'Content-Type': 'image/' + req.params.format,
-                'Content-Length': data.length
-              });
-              listener.write(data);
-            } else {
-              listener.writeHead(500);
+            var d, listener, tmp, _i, _len, _results;
+            logRequests();
+            tmp = preview_listeners;
+            preview_listeners = new Array();
+            d = Date.parse(new Date());
+            _results = [];
+            for (_i = 0, _len = tmp.length; _i < _len; _i++) {
+              listener = tmp[_i];
+              if (!er) {
+                listener.writeHead(200, {
+                  'Content-Type': 'image/' + req.params.format,
+                  'Content-Length': data.length
+                });
+                listener.write(data);
+              } else {
+                listener.writeHead(500);
+              }
+              _results.push(listener.end());
             }
-            _results.push(listener.end());
-          }
-          return _results;
-        });
+            return _results;
+          });
       }
     }
   });
