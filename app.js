@@ -10,7 +10,6 @@
   var browser = mdns.createBrowser(mdns.tcp('remote'));
   browser.on('serviceUp', function(service) {
     console.log("service up: ", service.type.name);
-    // TODO : fix double connexion
     if (_.findWhere(services, {name:service.type.name, host:service.host.substr(0, service.host.length - 1), port:service.port}) === undefined) {
       console.log('New socket.io connection with service "' + service.type.name + '" on: '+service.host.substr(0, service.host.length - 1)+':'+service.port);
       services.push({name:service.type.name, host:service.host.substr(0, service.host.length - 1), port:service.port});
@@ -22,8 +21,7 @@
   });
   browser.start();
 
-  var os = require("os");
-  var host = os.hostname();
+  var host = require("os").hostname();
   try {
     var cam_id = host.match(/voldenuit(.*)/)[1];
   } catch (err) {
