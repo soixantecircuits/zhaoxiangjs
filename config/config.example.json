@@ -1,0 +1,11 @@
+{
+  "servicelookup": {
+    "name": "remote"
+  },
+  "slack": { 
+    "token": "XXXXX/XXXX/XXX", 
+    "channel": "#general",
+    "text": "Hello"
+  },
+  "debug": true
+}
