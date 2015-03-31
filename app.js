@@ -1,27 +1,14 @@
 'use strict';
 (function() {
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
-  var config = require('./config/config.json');
   var io = require('socket.io-client');
   var _ = require('lodash');
-  var mdns = require('mdns');
   var argv = require('minimist')(process.argv.slice(2));
-  var services = [];
+
+  var config = require('./config/config.json');
+  var utils = require('./utils');
 
 
-  var browser = mdns.createBrowser(mdns.tcp(config.servicelookup.name));
-  browser.on('serviceUp', function(service) {
-    console.log("service up: ", service.type.name);
-    if (_.findWhere(services, {name:service.type.name, host:service.host.substr(0, service.host.length - 1), port:service.port}) === undefined) {
-      console.log('New socket.io connection with service "' + service.type.name + '" on: '+service.host.substr(0, service.host.length - 1)+':'+service.port);
-      services.push({name:service.type.name, host:service.host.substr(0, service.host.length - 1), port:service.port});
-      socketioInit(service.host.substr(0, service.host.length - 1), service.port);
-    }
-  });
-  browser.on('serviceDown', function(service) {
-    console.log("service down: ", service.type.name);
-  });
-  browser.start();
 
   var host = require("os").hostname();
   try {
@@ -32,7 +19,7 @@
   }
 
 
-  function socketioInit(address, port) {
+  utils.connectToService(config.servicelookup.name, function socketioInit(err, address, port) {
     var socket = io('http://' + address + ':' + port);
     socket
       .on('connect', function() {
@@ -57,7 +44,7 @@
             });
         }
       });
-  }
+  });
 
   var lastPicture;
   var is_streaming = false;
