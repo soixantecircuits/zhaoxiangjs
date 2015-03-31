@@ -1,13 +1,36 @@
 'use strict';
 (function() {
-  var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
-  var io = require('socket.io-client');
+
+  var util = require('util');
+  var fs = require('fs');
   var _ = require('lodash');
-  var argv = require('minimist')(process.argv.slice(2));
+
+  var GPhoto = require('gphoto2');
+  var express = require('express');
+  var bodyParser = require('body-parser');
+  var mkdirp = require('mkdirp');
+  var io = require('socket.io-client');
+  var has = require('deep-has');
+  var diff = require('deep-diff').diff;
 
   var config = require('./config/config.json');
   var utils = require('./utils');
 
+  var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
+  var argv = require('minimist')(process.argv.slice(2));
+  var lastPicture;
+  var is_streaming = false;
+  var last_error = 0;
+
+  process.title = 'zhaoxiangjs';
+
+  gphoto = new GPhoto.GPhoto2();
+
+  requests = {};
+
+  preview_listeners = [];
+
+  camera = void 0;
 
 
   var host = require("os").hostname();
@@ -18,66 +41,6 @@
     console.log('Apparently this computer is not in the team, check your hostname.');
   }
 
-
-  utils.connectToService(config.servicelookup.name, function socketioInit(err, address, port) {
-    var socket = io('http://' + address + ':' + port);
-    socket
-      .on('connect', function() {
-        console.log('socketio connected.');
-      })
-      .on('shoot', function(snap_id) {
-        if (!camera) {
-          // TODO: socketio error retrieve
-          on_error(er);
-        } else {
-          return camera.takePicture({
-            download: true,
-            targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
-          }, function(er, data) {
-              if (er) {
-                on_error(er);
-              // TODO: socketio error retrieve
-              } else {
-                lastPicture = data;
-                console.log('lastPicture: ' + lastPicture);
-              }
-            });
-        }
-      });
-  });
-
-  var lastPicture;
-  var is_streaming = false;
-  var has = require('deep-has');
-  var diff = require('deep-diff').diff;
-  var last_error = 0;
-
-  process.title = 'zhaoxiangjs';
-
-  _ref = {
-    "fs": "fs",
-    "GPhoto": "gphoto2",
-    "express": "express",
-    _: "lodash",
-    "bodyParser": "body-parser",
-    "util": "util",
-    "mkdirp": "mkdirp"
-  };
-  for (id in _ref) {
-    name = _ref[id];
-    if (global[id] == null) {
-      global[id] = require(name);
-    }
-  }
-
-  gphoto = new GPhoto.GPhoto2();
-
-  requests = {};
-
-  preview_listeners = [];
-
-  camera = void 0;
-
   mkdirp('/tmp/stream', function(err) {
     if (err) console.error(err)
   });
@@ -85,30 +48,10 @@
     if (err) console.error(err)
   });
 
-  var slackit = function(er){
-    var request = require('request');
-    var payload1 = {
-      "channel"    : config.slack.channel,
-      "username"   : host,
-      "text"       : config.slack.text + " " + er ,
-      "icon_emoji" : ":ghost:"
-    };
-
-    var options = {
-      uri: "https://hooks.slack.com/services/" + config.slack.token,
-      form:  JSON.stringify( payload1 )
-    };
-    request.post(options, function(error, response, body){
-      if (!error && response.statusCode == 200) {
-        console.log("Slack success: " + body.name);
-      } else {
-        console.log('error: '+ response.statusCode + body);
-      }
-    });
-  }
-  slackit();
+  utils.slackit();
 
   var on_error = function(er) {
+    // TODO: socketio error retrieve, to see it in the logs of nuwa
     last_error = er;
     console.error("error code: " + er);
     if (last_error == -7) {
@@ -121,19 +64,6 @@
     slackit(er);
     setTimeout(function(){process.exit(-1);},1000);
   }
-
-  var restart_usb = function() {
-    var exec = require('child_process').exec;
-    console.log("resetting usb");
-    exec('bash reset_device.sh ' + camera.port, function(error, stdout, stderr) {
-      console.log('stdout: ' + stdout);
-      console.log('stderr: ' + stderr);
-      if (error !== null) {
-        console.log('exec error: ' + error);
-      }
-    });
-  };
-
   gphoto.list(function(cameras) {
     camera = _(cameras).chain().filter(function(camera) {
       return camera.model.match(/(Canon|Nikon)/);
@@ -146,6 +76,7 @@
     } else if (camera) {
       console.log("port: " + camera.port);
       console.log("loading " + camera.model + " settings");
+      // TODO: uniform error handling
       return camera.getConfig(function(er, settings) {
         if (er) {
           last_error = er;
@@ -154,13 +85,39 @@
             camera_error: er
           });
 
-          restart_usb();
+          utils.restart_usb();
           process.exit(-1);
         }
         return console.log(settings);
       });
     }
   });
+
+  utils.connectToService(config.servicelookup.name, function socketioInit(err, address, port) {
+    var socket = io('http://' + address + ':' + port);
+    socket
+      .on('connect', function() {
+        console.log('socketio connected.');
+      })
+      .on('shoot', function(snap_id) {
+        if (!camera) {
+          on_error(er);
+        } else {
+          return camera.takePicture({
+            download: true,
+            targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+          }, function(er, data) {
+              if (er) {
+                on_error(er);
+              } else {
+                lastPicture = data;
+                console.log('lastPicture: ' + lastPicture);
+              }
+            });
+        }
+      });
+  });
+
 
   app = express();
 
