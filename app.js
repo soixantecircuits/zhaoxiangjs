@@ -27,6 +27,14 @@
   var isRaspicam = config.camera == "raspicam";
   console.log("isRaspicam :" + isRaspicam);
 
+  var raspicam_options = {
+        mode: "photo",
+        awb: 'fluorescent',
+        output: "/tmp/snaps/snap.jpg",
+        encoding: "jpg",
+        exposure: 'night', 
+  };
+
   process.title = 'zhaoxiangjs';
 
   gphoto = new GPhoto.GPhoto2();
@@ -145,11 +153,8 @@
           }
         }  
         else {
-          var camera = new RaspiCam({
-            mode: "photo",
-            output: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX',
-            encoding: "jpg"
-          });
+          raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX';
+          var camera = new RaspiCam(raspicam_options);
           camera.on("read", function( err, timestamp, filename ){
             console.log("photo image captured with filename: " + filename );
             lastPicture = filename;
@@ -234,11 +239,8 @@
       }
     }
     else {
-      var camera = new RaspiCam({
-        mode: "photo",
-        output: "/tmp/snaps/snap.jpg",
-        encoding: "jpg"
-      });
+      raspicam_options.output = "/tmp/snaps/snap.jpg";
+      var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
         console.log("photo image captured with filename: " + filename );
         lastPicture = filename;
@@ -267,11 +269,8 @@
       }
     }
     else {
-      var camera = new RaspiCam({
-        mode: "photo",
-        output: "/tmp/snaps/snap.jpg",
-        encoding: "jpg"
-      });
+      raspicam_options.output = "/tmp/snaps/snap.jpg";
+      var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
         console.log("photo image captured with filename: " + filename );
         lastPicture = filename;
