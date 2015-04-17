@@ -2,6 +2,7 @@
 module.exports = {
   // TODO: process mdns erros
   connectToService: function(servicename, callback) {
+    // TODO: is best practise to use global requires or defines them inside method?
     var mdns = require('mdns');
     var _ = require('lodash');
     var services = [];

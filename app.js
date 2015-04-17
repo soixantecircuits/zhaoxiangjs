@@ -12,15 +12,20 @@
   var io = require('socket.io-client');
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
+  var RaspiCam = require("raspicam");
 
   var config = require('./config/config.json');
   var utils = require('./utils');
 
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
+  // TODO: recognize options, -f is for no camera
   var argv = require('minimist')(process.argv.slice(2));
   var lastPicture;
   var is_streaming = false;
   var last_error = 0;
+  var cam_id = 0;
+  var isRaspicam = config.camera == "raspicam";
+  console.log("isRaspicam :" + isRaspicam);
 
   process.title = 'zhaoxiangjs';
 
@@ -31,11 +36,33 @@
   preview_listeners = [];
 
   camera = void 0;
+/*
+  var snap_id = 36;
+        var camera = new RaspiCam({
+          mode: "photo",
+          output: "/tmp/snaps/snap-" + snap_id + "-0000.jpg",
+          encoding: "jpg"
+        });
 
+  camera.on("started", function( err, timestamp ){
+    console.log("photo started at " + timestamp );
+  });
 
+  camera.on("read", function( err, timestamp, filename ){
+    console.log("photo image captured with filename: " + filename );
+  });
+
+  camera.on("exit", function( timestamp ){
+    console.log("photo child process has exited at " + timestamp );
+  });
+
+  camera.start();
+*/
   var host = require("os").hostname();
+  // TODO: do not use try/catch?
   try {
-    var cam_id = host.match(/voldenuit(.*)/)[1];
+    // TODO: USE a config file for the hostname
+    cam_id = host.match(/chow-chow(.*)/)[1];
   } catch (err) {
     //console.log(err);
     console.log('Apparently this computer is not in the team, check your hostname.');
@@ -48,21 +75,21 @@
     if (err) console.error(err)
   });
 
-  utils.slackit();
+  //utils.slackit();
 
   var on_error = function(er) {
     // TODO: socketio error retrieve, to see it in the logs of nuwa
     last_error = er;
     console.error("error code: " + er);
     if (last_error == -7) {
-      console.error("Can't connect to camera, exiting");
-      process.exit(-1);
+      //console.error("Can't connect to camera, exiting");
+      //process.exit(-1);
     }
     else if (last_error == -1) {
       console.error("Exiting because -1 error causes an error of retrieving the last picture at next shoot");
     }
     slackit(er);
-    setTimeout(function(){process.exit(-1);},1000);
+    //setTimeout(function(){process.exit(-1);},1000);
   }
   gphoto.list(function(cameras) {
     camera = _(cameras).chain().filter(function(camera) {
@@ -71,8 +98,8 @@
     //if (camera)
       //console.log("found " + cameras.length + " cameras");
     if (!camera && !argv.f) {
-      console.log('Exit - no camera found, sorry. :(');
-      process.exit(-1);
+      //console.log('Exit - no camera found, sorry. :(');
+      //process.exit(-1);
     } else if (camera) {
       console.log("port: " + camera.port);
       console.log("loading " + camera.model + " settings");
@@ -86,7 +113,7 @@
           });
 
           utils.restart_usb();
-          process.exit(-1);
+          //process.exit(-1);
         }
         return console.log(settings);
       });
@@ -100,20 +127,34 @@
         console.log('socketio connected.');
       })
       .on('shoot', function(snap_id) {
-        if (!camera) {
-          on_error(er);
-        } else {
-          return camera.takePicture({
-            download: true,
-            targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
-          }, function(er, data) {
-              if (er) {
-                on_error(er);
-              } else {
-                lastPicture = data;
-                console.log('lastPicture: ' + lastPicture);
-              }
-            });
+        if (!isRaspicam){
+          if (!camera) {
+            on_error(er);
+          } else {
+            return camera.takePicture({
+              download: true,
+              targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+            }, function(er, data) {
+                if (er) {
+                  on_error(er);
+                } else {
+                  lastPicture = data;
+                  console.log('lastPicture: ' + lastPicture);
+                }
+              });
+          }
+        }  
+        else {
+          var camera = new RaspiCam({
+            mode: "photo",
+            output: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX',
+            encoding: "jpg"
+          });
+          camera.on("read", function( err, timestamp, filename ){
+            console.log("photo image captured with filename: " + filename );
+            lastPicture = filename;
+          });
+          camera.start();
         }
       });
   });
@@ -174,40 +215,72 @@
   });
 
   app.get('/api/shoot/', function(req, res) {
-    if (!camera) {
-      return res.send(404, 'Camera not connected');
-    } else {
-      return camera.takePicture({
-        targetPath: '/tmp/foo.XXXXXXX'
-      }, function(er, data) {
-          if (er) {
-            on_error(er);
-            return res.send(404, er);
-          } else {
-            lastPicture = data;
-            console.log('lastPicture: ' + lastPicture);
-            return res.send(lastPicture);
-          }
-        });
+    if (!isRaspicam){
+      if (!camera) {
+        return res.send(404, 'Camera not connected');
+      } else {
+        return camera.takePicture({
+          targetPath: '/tmp/foo.XXXXXXX'
+        }, function(er, data) {
+            if (er) {
+              on_error(er);
+              return res.send(404, er);
+            } else {
+              lastPicture = data;
+              console.log('lastPicture: ' + lastPicture);
+              return res.send(lastPicture);
+            }
+          });
+      }
+    }
+    else {
+      var camera = new RaspiCam({
+        mode: "photo",
+        output: "/tmp/snaps/snap.jpg",
+        encoding: "jpg"
+      });
+      camera.on("read", function( err, timestamp, filename ){
+        console.log("photo image captured with filename: " + filename );
+        lastPicture = filename;
+        return res.send('/api/lastpicture/' + req.params.format);
+      });
+      camera.start();
     }
   });
 
   app.get('/api/shoot/:format', function(req, res) {
-    if (!camera) {
-      return res.send(404, 'Camera not connected');
-    } else {
-      return camera.takePicture({
-        targetPath: '/tmp/foo.XXXXXXX'
-      }, function(er, data) {
-          if (er) {
-            on_error(er);
-            return res.send(404, er);
-          } else {
-            lastPicture = data;
-            return res.send('/api/lastpicture/' + req.params.format);
-          }
-        });
+    if (!isRaspicam){
+      if (!camera) {
+        return res.send(404, 'Camera not connected');
+      } else {
+        return camera.takePicture({
+          targetPath: '/tmp/foo.XXXXXXX'
+        }, function(er, data) {
+            if (er) {
+              on_error(er);
+              return res.send(404, er);
+            } else {
+              lastPicture = data;
+              return res.send('/api/lastpicture/' + req.params.format);
+            }
+          });
+      }
     }
+    else {
+      var camera = new RaspiCam({
+        mode: "photo",
+        output: "/tmp/snaps/snap.jpg",
+        encoding: "jpg"
+      });
+      camera.on("read", function( err, timestamp, filename ){
+        console.log("photo image captured with filename: " + filename );
+        lastPicture = filename;
+        return res.send('/api/lastpicture/' + req.params.format);
+      });
+      camera.start();
+
+    }
+
   });
 
   app.get('/api/lastpicture/', function(req, res) {
