@@ -27,12 +27,26 @@
   var isRaspicam = config.camera == "raspicam";
   console.log("isRaspicam :" + isRaspicam);
 
+  // https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
   var raspicam_options = {
         mode: "photo",
-        awb: 'fluorescent',
-        output: "/tmp/snaps/snap.jpg",
+        output: "/tmp/snap.jpg",
         encoding: "jpg",
-        exposure: 'night', 
+        sharpness: 0,
+        contrast: 0,
+        brightness: 50,
+        saturation: 0,
+        ISO: 400,
+        ev: 0, // Exposure Compensation
+        exposure: 'beach', 
+        awb: 'fluorescent',
+        imxfx: 'none', // image effect
+        shutter: 1000, // in microsecondes
+        drc : 'off', // improve for low light areas
+        stats: true,
+        awbgains: '1,1', // Sets blue and red gains
+        //mode: 7, // conflicts with mode above
+        quality: 100,
   };
 
   process.title = 'zhaoxiangjs';
@@ -239,7 +253,7 @@
       }
     }
     else {
-      raspicam_options.output = "/tmp/snaps/snap.jpg";
+      raspicam_options.output = "/tmp/snap.jpg";
       var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
         console.log("photo image captured with filename: " + filename );
@@ -269,7 +283,7 @@
       }
     }
     else {
-      raspicam_options.output = "/tmp/snaps/snap.jpg";
+      raspicam_options.output = "/tmp/snap.jpg";
       var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
         console.log("photo image captured with filename: " + filename );
