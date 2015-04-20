@@ -1,0 +1,141 @@
+{
+    "main": {
+        "label": "Camera and Driver Configuration",
+        "type": "window",
+        "children": {
+            "imgsettings": {
+                "label": "Image Settings",
+                "type": "section",
+                "children": {
+                    "resolution": {
+                        "label": "Resolution",
+                        "type": "choice",
+                        "value": "(1280, 720)",
+                        "choices": ["(2592, 1944)", "(1296, 972)", "(1296, 730)", "(640, 480)", "(1920, 1080)", "(1024, 768)", "(1280, 720)", "(800, 600)"]
+                    },
+                    "awb_mode": {
+                        "label": "WhiteBalance",
+                        "type": "choice",
+                        "value": "off",
+                        "choices": ["off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
+                    },
+                    "awb_gain_red": {
+                        "label": "AWB Red",
+                        "type": "range",
+                        "value": 1,
+                        "min": 0,
+                        "max": 8,
+                        "step": 0.001
+                    },
+                    "awb_gain_blue": {
+                        "label": "AWB Blue",
+                        "type": "range",
+                        "value": 1,
+                        "min": 0,
+                        "max": 8,
+                        "step": 0.001
+                    },
+                    "brightness": {
+                        "label": "Brightness",
+                        "type": "range",
+                        "value": 50,
+                        "min": 0,
+                        "max": 100,
+                        "step": 1
+                    },
+                    "contrast": {
+                        "label": "Contrast",
+                        "type": "range",
+                        "value": 0,
+                        "min": -100,
+                        "max": 100,
+                        "step": 1
+                    },
+                    "saturation": {
+                        "label": "Saturation",
+                        "type": "range",
+                        "value": 0,
+                        "min": -100,
+                        "max": 100,
+                        "step": 1
+                    },
+                    "sharpness": {
+                        "label": "Sharpness",
+                        "type": "range",
+                        "value": 0,
+                        "min": -100,
+                        "max": 100,
+                        "step": 1
+                    },
+                    "drc_strength": {
+                        "label": "Dynamic Range Compression",
+                        "type": "choice",
+                        "value": "off",
+                        "choices": ["off", "low", "medium", "high"]
+                    },
+                    "exposure_compensation": {
+                        "label": "Exposure compensation",
+                        "type": "range",
+                        "value": 0,
+                        "min": -25,
+                        "max": 25,
+                        "step": 1
+                    },
+                    "exposure_mode": {
+                        "label": "Exposure mode",
+                        "type": "choice",
+                        "value": "auto",
+                        "choices": ["off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
+                    },
+                    "shutter_speed": {
+                        "label": "Shutter speed",
+                        "type": "range",
+                        "value": 1,
+                        "min": 0,
+                        "max": 6000000,
+                        "step": 100
+                    },
+                    "hflip": {
+                        "label": "Horizontal flip",
+                        "type": "toggle",
+                        "value": 0
+                    },
+                    "vflip": {
+                        "label": "Vertical flip",
+                        "type": "toggle",
+                        "value": 0
+                    },
+                    "image_denoise": {
+                        "label": "Denoise",
+                        "type": "toggle",
+                        "value": 1
+                    },
+                    "image_effect": {
+                        "label": "Image effect",
+                        "type": "choice",
+                        "value": "none",
+                        "choices": ["none", "negative", "solarize", "sketch", "denoise", "emboss", "oilpaint", "hatch", "gpen", "pastel", "watercolor", "film", "blur", "saturation", "colorswap", "washedout", "posterise", "colorpoint", "colorbalance", "cartoon", "deinterlace1", "deinterlace2"]
+                    },
+                    "iso": {
+                        "label": "ISO",
+                        "type": "choice",
+                        "value": 0,
+                        "choices": [0, 100, 200, 320, 400, 500, 640, 800]
+                    },
+                    "meter_mode": {
+                        "label": "Meter mode",
+                        "type": "choice",
+                        "value": "average",
+                        "choices": ["average", "spot", "backlit", "matrix"]
+                    },
+                    "rotation": {
+                        "label": "Rotation",
+                        "type": "choice",
+                        "value": 0,
+                        "choices": [0, 90, 180, 270]
+                    }
+                }
+            }
+        }
+    }
+}

@@ -13,6 +13,8 @@
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
   var RaspiCam = require("raspicam");
+  var osc = require('node-osc');
+  var client = new osc.Client('127.0.0.1', 3333); 
 
   var config = require('./config/config.json');
   var utils = require('./utils');
@@ -26,6 +28,9 @@
   var cam_id = 0;
   var isRaspicam = config.camera == "raspicam";
   console.log("isRaspicam :" + isRaspicam);
+  if (isRaspicam){
+    var settings = require('./picamera-settings.json');
+  }
 
   // https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
   var raspicam_options = {
@@ -38,9 +43,11 @@
         saturation: 0,
         ISO: 400,
         ev: 0, // Exposure Compensation
-        exposure: 'beach', 
+        //exposure: 'night', 
         awb: 'fluorescent',
         imxfx: 'none', // image effect
+        colfx: '127:127',
+        metering: 'average',
         shutter: 1000, // in microsecondes
         drc : 'off', // improve for low light areas
         stats: true,
@@ -167,13 +174,16 @@
           }
         }  
         else {
-          raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX';
+          raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg';
+          client.send('/picamera-osc/shoot', raspicam_options.output);
+          /*
           var camera = new RaspiCam(raspicam_options);
           camera.on("read", function( err, timestamp, filename ){
             console.log("photo image captured with filename: " + filename );
             lastPicture = filename;
           });
           camera.start();
+          */
         }
       });
   });
@@ -254,6 +264,8 @@
     }
     else {
       raspicam_options.output = "/tmp/snap.jpg";
+      client.send('/picamera-osc/shoot', raspicam_options.output);
+      /*
       var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
         console.log("photo image captured with filename: " + filename );
@@ -261,6 +273,7 @@
         return res.send('/api/lastpicture/' + req.params.format);
       });
       camera.start();
+      */
     }
   });
 
@@ -284,6 +297,12 @@
     }
     else {
       raspicam_options.output = "/tmp/snap.jpg";
+      client.send('/picamera-osc/shoot', raspicam_options.output);
+      setTimeout(function(){
+        lastPicture = raspicam_options.output;
+        return res.send('/api/lastpicture/' + req.params.format);
+      }, 2000);
+      /*
       var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
         console.log("photo image captured with filename: " + filename );
@@ -291,7 +310,7 @@
         return res.send('/api/lastpicture/' + req.params.format);
       });
       camera.start();
-
+      */
     }
 
   });
@@ -331,27 +350,39 @@
   });
 
   app.put('/api/settings/:name', function(req, res) {
-    if (!camera) {
-      return res.send(404, 'Camera not connected');
-    } else {
-      return camera.setConfigValue(req.params.name, req.body.newValue, function(er) {
-        if (er) {
-          on_error(er);
-          return res.send(404, JSON.stringify(er));
-        } else {
-          return res.send(200);
-        }
-      });
+    if (!isRaspicam){
+      if (!camera) {
+        return res.send(404, 'Camera not connected');
+      } else {
+        return camera.setConfigValue(req.params.name, req.body.newValue, function(er) {
+          if (er) {
+            on_error(er);
+            return res.send(404, JSON.stringify(er));
+          } else {
+            return res.send(200);
+          }
+        });
+      }
+    }
+    else {
+        // TODO: check errors
+        client.send('/picamera-osc/settings', req.params.name, req.body.newValue);
+        return res.send(200);
     }
   });
 
   app.get('/api/settings', function(req, res) {
-    if (!camera) {
-      return res.send(404, 'Camera not connected');
-    } else {
-      return camera.getConfig(function(er, settings) {
-        return res.send(JSON.stringify(settings));
-      });
+    if (!isRaspicam){
+      if (!camera) {
+        return res.send(404, 'Camera not connected');
+      } else {
+        return camera.getConfig(function(er, settings) {
+          return res.send(JSON.stringify(settings));
+        });
+      }
+    }
+    else{
+          return res.send(JSON.stringify(settings));
     }
   });
 
