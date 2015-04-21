@@ -29,7 +29,8 @@
   var isRaspicam = config.camera == "raspicam";
   console.log("isRaspicam :" + isRaspicam);
   if (isRaspicam){
-    var settings = require('./picamera-settings.json');
+    var settings_path = './picamera-settings.json';
+    var settings = require(settings_path);
   }
 
   // https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
@@ -120,6 +121,30 @@
     slackit(er);
     //setTimeout(function(){process.exit(-1);},1000);
   }
+
+  var setSetting = function (param, value){
+
+    client.send('/picamera-osc/settings', param, value);
+    settings.main.children.imgsettings.children[param].value = value
+
+      fs.writeFile(settings_path, JSON.stringify(settings, null, 4), function(err) {
+          if(err) {
+            console.log(err);
+          } else {
+            //console.log("JSON saved to " + settings_path);
+          }
+      }); 
+  }
+  var loadSettings = function(){
+    var settings_ = settings.main.children.imgsettings.children;
+    for (var param in settings_){
+      setSetting(param, settings_[param].value);
+      console.log(param, 'set to:', settings_[param].value);
+    }
+  }
+  loadSettings();
+
+
   gphoto.list(function(cameras) {
     camera = _(cameras).chain().filter(function(camera) {
       return camera.model.match(/(Canon|Nikon)/);
@@ -334,18 +359,24 @@
   });
 
   app.get('/api/settings/:name', function(req, res) {
-    if (!camera) {
-      return res.send(404, 'Camera not connected');
-    } else {
-      camera.getConfig(function(er, settings) {
-        if (er) {
-          on_error(er);
-          return res.send(404, JSON.stringify(er));
-        } else {
-          var setting = has(settings, req.params.name);
-          return res.send(_.values(has(setting, 'value')[0])[0]);
-        }
-      });
+    if (!isRaspicam){
+      if (!camera) {
+        return res.send(404, 'Camera not connected');
+      } else {
+        camera.getConfig(function(er, settings) {
+          if (er) {
+            on_error(er);
+            return res.send(404, JSON.stringify(er));
+          } else {
+            var setting = has(settings, req.params.name);
+            return res.send(_.values(has(setting, 'value')[0])[0]);
+          }
+        });
+      }
+    }
+    else {
+      var setting = has(settings, req.params.name);
+      return res.send(_.values(has(setting, 'value')[0])[0]);
     }
   });
 
@@ -366,7 +397,10 @@
     }
     else {
         // TODO: check errors
-        client.send('/picamera-osc/settings', req.params.name, req.body.newValue);
+        // send parameter to camera
+        // save setting
+        setSetting(req.params.name, req.body.newValue);
+
         return res.send(200);
     }
   });
@@ -387,31 +421,49 @@
   });
 
   app.put('/api/settings', function(req, res) {
-    if (!camera) {
-      return res.send(404, 'Camera not connected');
-    } else {
-      var _settings = JSON.parse(req.body.settings);
-      camera.getConfig(function(err, settings) {
-        if (err) {
-          console.log(err);
-        } else {
-          var diffs = diff(settings, _settings);
-          for (var i = 0; i < diffs.length; i++) {
-            var d = diffs[i];
-            if (d.kind === 'E' && d.path[d.path.length - 1] == 'value') {
-              camera.setConfigValue(d.path[d.path.length - 2], d.rhs, function(err) {
-                if (err) {
-                  return res.send(404, JSON.stringify(err));
-                } else {
-                  console.log(d.path[d.path.length - 2], 'changed to:', d.rhs);
+    if (!isRaspicam){
+      if (!camera) {
+        return res.send(404, 'Camera not connected');
+      } else {
+        var _settings = JSON.parse(req.body.settings);
+        camera.getConfig(function(err, settings) {
+          if (err) {
+            console.log(err);
+          } else {
+            var diffs = diff(settings, _settings);
+            if (diffs){
+              for (var i = 0; i < diffs.length; i++) {
+                var d = diffs[i];
+                if (d.kind === 'E' && d.path[d.path.length - 1] == 'value') {
+                  camera.setConfigValue(d.path[d.path.length - 2], d.rhs, function(err) {
+                    if (err) {
+                      return res.send(404, JSON.stringify(err));
+                    } else {
+                      console.log(d.path[d.path.length - 2], 'changed to:', d.rhs);
+                    }
+                  });
                 }
-              });
+              }
             }
           }
-          ;
+          return res.send(200);
+        });
+      }
+    } 
+    else {
+      var _settings = JSON.parse(req.body.settings);
+      console.log(settings);
+      var diffs = diff(settings, _settings);
+      if (diffs){
+        for (var i = 0; i < diffs.length; i++) {
+          var d = diffs[i];
+          if (d.kind === 'E' && d.path[d.path.length - 1] == 'value') {
+            setSetting(d.path[d.path.length - 2], d.rhs);
+            console.log(d.path[d.path.length - 2], 'changed to:', d.rhs);
+          }
         }
-        return res.send(200);
-      });
+      }
+      return res.send(200);
     }
   });
 
