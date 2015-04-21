@@ -123,17 +123,18 @@
   }
 
   var setSetting = function (param, value){
+    //console.log(param, 'set to:', value);
 
     client.send('/picamera-osc/settings', param, value);
     settings.main.children.imgsettings.children[param].value = value
 
-      fs.writeFile(settings_path, JSON.stringify(settings, null, 4), function(err) {
+      fs.writeFileSync(settings_path, JSON.stringify(settings, null, 4)/*, function(err) {
           if(err) {
             console.log(err);
           } else {
             //console.log("JSON saved to " + settings_path);
           }
-      }); 
+      }*/); 
   }
   var loadSettings = function(){
     var settings_ = settings.main.children.imgsettings.children;
