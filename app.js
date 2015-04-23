@@ -32,7 +32,6 @@
     var settings_path = './picamera-settings.json';
     var settings = require(settings_path);
   }
-
   // https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
   var raspicam_options = {
         mode: "photo",
@@ -56,6 +55,22 @@
         //mode: 7, // conflicts with mode above
         quality: 100,
   };
+
+  var zerorpc = require("zerorpc");
+
+  var client = new zerorpc.Client();
+  client.connect("tcp://127.0.0.1:4242");
+  client.on("error", function(error) {
+        console.error("RPC client error:", error);
+  });
+
+/*
+  setInterval(function(){client.invoke("hello", "World!", function(error, res, more) {
+      console.log(res);
+      });}
+    , 1000);
+  */
+
 
   process.title = 'zhaoxiangjs';
 
@@ -125,7 +140,12 @@
   var setSetting = function (param, value){
     //console.log(param, 'set to:', value);
 
-    client.send('/picamera-osc/settings', param, value);
+    //client.send('/picamera-osc/settings', param, value);
+    client.invoke("set_setting", param, value, function(error, data, more) {
+      console.log(data);
+    });
+
+
     settings.main.children.imgsettings.children[param].value = value
 
       fs.writeFileSync(settings_path, JSON.stringify(settings, null, 4)/*, function(err) {
@@ -201,7 +221,11 @@
         }  
         else {
           raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg';
-          client.send('/picamera-osc/shoot', raspicam_options.output);
+          //client.send('/picamera-osc/shoot', raspicam_options.output);
+          client.invoke("shoot", raspicam_options.output, function(error, data, more) {
+            console.log("photo image captured with filename: " + data );
+            lastPicture = data;
+          });
           /*
           var camera = new RaspiCam(raspicam_options);
           camera.on("read", function( err, timestamp, filename ){
@@ -290,7 +314,12 @@
     }
     else {
       raspicam_options.output = "/tmp/snap.jpg";
-      client.send('/picamera-osc/shoot', raspicam_options.output);
+      client.invoke("shoot", raspicam_options.output, function(error, data, more) {
+        console.log("photo image captured with filename: " + data );
+        lastPicture = data;
+        return res.send('/api/lastpicture/' + req.params.format);
+      });
+      //client.send('/picamera-osc/shoot', raspicam_options.output);
       /*
       var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){
@@ -323,11 +352,17 @@
     }
     else {
       raspicam_options.output = "/tmp/snap.jpg";
-      client.send('/picamera-osc/shoot', raspicam_options.output);
+      client.invoke("shoot", raspicam_options.output, function(error, data, more) {
+        console.log("photo image captured with filename: " + data );
+        lastPicture = data;
+        return res.send('/api/lastpicture/' + req.params.format);
+      });
+      /*client.send('/picamera-osc/shoot', raspicam_options.output);
       setTimeout(function(){
         lastPicture = raspicam_options.output;
         return res.send('/api/lastpicture/' + req.params.format);
       }, 2000);
+      */
       /*
       var camera = new RaspiCam(raspicam_options);
       camera.on("read", function( err, timestamp, filename ){

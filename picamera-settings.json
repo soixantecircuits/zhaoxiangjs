@@ -11,13 +11,33 @@
                         "label": "Resolution",
                         "type": "choice",
                         "value": "(1280, 720)",
-                        "choices": ["(2592, 1944)", "(1296, 972)", "(1296, 730)", "(640, 480)", "(1920, 1080)", "(1024, 768)", "(1280, 720)", "(800, 600)"]
+                        "choices": [
+                            "(2592, 1944)",
+                            "(1296, 972)",
+                            "(1296, 730)",
+                            "(640, 480)",
+                            "(1920, 1080)",
+                            "(1024, 768)",
+                            "(1280, 720)",
+                            "(800, 600)"
+                        ]
                     },
                     "awb_mode": {
                         "label": "WhiteBalance",
                         "type": "choice",
-                        "value": "off",
-                        "choices": ["off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
+                        "value": "fluorescent",
+                        "choices": [
+                            "off",
+                            "auto",
+                            "sunlight",
+                            "cloudy",
+                            "shade",
+                            "tungsten",
+                            "fluorescent",
+                            "incandescent",
+                            "flash",
+                            "horizon"
+                        ]
                     },
                     "awb_gain_red": {
                         "label": "AWB Red",
@@ -71,7 +91,12 @@
                         "label": "Dynamic Range Compression",
                         "type": "choice",
                         "value": "off",
-                        "choices": ["off", "low", "medium", "high"]
+                        "choices": [
+                            "off",
+                            "low",
+                            "medium",
+                            "high"
+                        ]
                     },
                     "exposure_compensation": {
                         "label": "Exposure compensation",
@@ -85,12 +110,26 @@
                         "label": "Exposure mode",
                         "type": "choice",
                         "value": "auto",
-                        "choices": ["off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
+                        "choices": [
+                            "off",
+                            "auto",
+                            "night",
+                            "nightpreview",
+                            "backlight",
+                            "spotlight",
+                            "sports",
+                            "snow",
+                            "beach",
+                            "verylong",
+                            "fixedfps",
+                            "antishake",
+                            "fireworks"
+                        ]
                     },
                     "shutter_speed": {
                         "label": "Shutter speed",
                         "type": "range",
-                        "value": 1,
+                        "value": 0,
                         "min": 0,
                         "max": 6000000,
                         "step": 100
@@ -114,25 +153,67 @@
                         "label": "Image effect",
                         "type": "choice",
                         "value": "none",
-                        "choices": ["none", "negative", "solarize", "sketch", "denoise", "emboss", "oilpaint", "hatch", "gpen", "pastel", "watercolor", "film", "blur", "saturation", "colorswap", "washedout", "posterise", "colorpoint", "colorbalance", "cartoon", "deinterlace1", "deinterlace2"]
+                        "choices": [
+                            "none",
+                            "negative",
+                            "solarize",
+                            "sketch",
+                            "denoise",
+                            "emboss",
+                            "oilpaint",
+                            "hatch",
+                            "gpen",
+                            "pastel",
+                            "watercolor",
+                            "film",
+                            "blur",
+                            "saturation",
+                            "colorswap",
+                            "washedout",
+                            "posterise",
+                            "colorpoint",
+                            "colorbalance",
+                            "cartoon",
+                            "deinterlace1",
+                            "deinterlace2"
+                        ]
                     },
                     "iso": {
                         "label": "ISO",
                         "type": "choice",
                         "value": 0,
-                        "choices": [0, 100, 200, 320, 400, 500, 640, 800]
+                        "choices": [
+                            0,
+                            100,
+                            200,
+                            320,
+                            400,
+                            500,
+                            640,
+                            800
+                        ]
                     },
                     "meter_mode": {
                         "label": "Meter mode",
                         "type": "choice",
                         "value": "average",
-                        "choices": ["average", "spot", "backlit", "matrix"]
+                        "choices": [
+                            "average",
+                            "spot",
+                            "backlit",
+                            "matrix"
+                        ]
                     },
                     "rotation": {
                         "label": "Rotation",
                         "type": "choice",
-                        "value": 0,
-                        "choices": [0, 90, 180, 270]
+                        "value": "180",
+                        "choices": [
+                            0,
+                            90,
+                            180,
+                            270
+                        ]
                     }
                 }
             }
