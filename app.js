@@ -107,7 +107,7 @@
   // TODO: do not use try/catch?
   try {
     // TODO: USE a config file for the hostname
-    cam_id = host.match(/chow-chow(.*)/)[1];
+    cam_id = host.match(/voldenuit(.*)/)[1];
   } catch (err) {
     //console.log(err);
     console.log('Apparently this computer is not in the team, check your hostname.');
@@ -157,10 +157,12 @@
       }*/); 
   }
   var loadSettings = function(){
-    var settings_ = settings.main.children.imgsettings.children;
-    for (var param in settings_){
-      setSetting(param, settings_[param].value);
-      console.log(param, 'set to:', settings_[param].value);
+    if (isRaspicam){
+      var settings_ = settings.main.children.imgsettings.children;
+      for (var param in settings_){
+        setSetting(param, settings_[param].value);
+        console.log(param, 'set to:', settings_[param].value);
+      }
     }
   }
   loadSettings();
@@ -426,7 +428,7 @@
             on_error(er);
             return res.send(404, JSON.stringify(er));
           } else {
-            return res.send(200);
+            return res.sendStatus(200);
           }
         });
       }
@@ -437,7 +439,7 @@
         // save setting
         setSetting(req.params.name, req.body.newValue);
 
-        return res.send(200);
+        return res.sendStatus(200);
     }
   });
 
@@ -482,7 +484,7 @@
               }
             }
           }
-          return res.send(200);
+          return res.sendStatus(200);
         });
       }
     } 
@@ -499,7 +501,7 @@
           }
         }
       }
-      return res.send(200);
+      return res.sendStatus(200);
     }
   });
 
