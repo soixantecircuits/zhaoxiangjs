@@ -8,9 +8,12 @@ Before start, make sure you have installed [zeromq](http://zeromq.org/intro:get-
 ```
 $ sudo apt-get install avahi-daemon libnss-mdns libavahi-compat-libdnssd-dev libgphoto2-2-dev curl
 npm i
+cp config/config.example.json config/config.json
+```
+Then fill it with your informations, and when it's done:
+```
 npm start
 ```
-
 
 If you have no camera you can just run it using :
 

@@ -169,9 +169,11 @@
 
 
   gphoto.list(function(cameras) {
-    camera = _(cameras).chain().filter(function(camera) {
-      return camera.model.match(/(Canon|Nikon)/);
-    }).first().value();
+    console.log(cameras[0]);
+    camera = cameras[0];
+    // camera = _(cameras).chain().filter(function(camera) {
+    //   return camera.model.match(/(Canon|Nikon)/);
+    // }).first().value();
     //if (camera)
       //console.log("found " + cameras.length + " cameras");
     if (!camera && !argv.f) {
