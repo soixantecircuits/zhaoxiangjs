@@ -7,5 +7,6 @@
     "channel": "#general",
     "text": "Hello"
   },
-  "debug": true
+  "debug": true,
+  "countdownDuration": 3
 }

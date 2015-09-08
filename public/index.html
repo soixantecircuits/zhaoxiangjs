@@ -2,21 +2,26 @@
 <head>
   <meta charset="utf-8">
   <title>Zhaoxiang</title>
+  <link rel="stylesheet" href="css/avenir/font.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="counter"></div>
   <!--<canvas id="preview" width="1056" height="704"></canvas>-->
   <div id="imageWrap">
     <img src="" alt="Main Image" id="mainImage" width="800px"/>
   </div>
   <div id="downloads"></div>
   <script type="text/javascript" src="//www.google.com/jsapi"></script>
-  <script type="text/javascript" src="/js/dat.gui.js"></script>
+  <script type="text/javascript" src="/js/lib/dat.gui.js"></script>
   <script src='//cdnjs.cloudflare.com/ajax/libs/superagent/0.15.7/superagent.min.js'></script>
 
   <script type="text/javascript">
     google.load('jquery', '1.7.1');
   </script>
   <script src="js/gphoto.js"></script>
+  <script src="js/lib/socket.io.js"></script>
+  <script src="js/main.js"></script>
   <!-- // <script type="text/javascript" src="http://coffeescript.org/extras/coffee-script.js"></script> -->
 
 </body>

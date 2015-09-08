@@ -10,16 +10,21 @@
   var bodyParser = require('body-parser');
   var mkdirp = require('mkdirp');
   var io = require('socket.io-client');
+
+  var app = require('express')();
+  var server = app.listen(1789);
+  var ioServer = require('socket.io')(server);
+
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
   var RaspiCam = require("raspicam");
   var osc = require('node-osc');
   var client = new osc.Client('127.0.0.1', 3333); 
-
+  
   var config = require('./config/config.json');
   var utils = require('./utils');
 
-  var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
+  var camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
   // TODO: recognize options, -f is for no camera
   var argv = require('minimist')(process.argv.slice(2));
   var lastPicture;
@@ -64,13 +69,16 @@
         console.error("RPC client error:", error);
   });
 
-/*
+  ioServer.on('connection', function(socket){
+    console.log('New client connected');
+  });
+
+/*  
   setInterval(function(){client.invoke("hello", "World!", function(error, res, more) {
       console.log(res);
       });}
     , 1000);
   */
-
 
   process.title = 'zhaoxiangjs';
 
@@ -207,21 +215,25 @@
       })
       .on('shoot', function(snap_id) {
         if (!isRaspicam){
-          if (!camera) {
-            on_error(er);
-          } else {
-            return camera.takePicture({
-              download: true,
-              targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
-            }, function(er, data) {
-                if (er) {
-                  on_error(er);
-                } else {
-                  lastPicture = data;
-                  console.log('lastPicture: ' + lastPicture);
-                }
-              });
-          }
+          ioServer.emit('countdown', config.countdownDuration);
+          setTimeout(function(){
+            if (!camera) {
+              on_error(er);
+            } else {
+              return camera.takePicture({
+                download: true,
+                targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+              }, function(er, data) {
+                  if (er) {
+                    on_error(er);
+                  } else {
+                    lastPicture = data;
+                    console.log('lastPicture: ' + lastPicture);
+                  }
+                });
+            }
+          }, config.countdownDuration*1000+1000);
+
         }  
         else {
           raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg';
@@ -242,8 +254,45 @@
       });
   });
 
+  var stream = function() {
+    return camera.takePicture({
+      preview: true,
+      targetPath: '/tmp/stream/foo.XXXXXXX'
+    }, function(er, data) {
+        if (er) {
+          on_error(er);
+        } else {
+          // success
+        }
+        // TODO: stop retrying after many errors
+        if (is_streaming) {
+          setTimeout(stream(), 0);
+        }
+      });
+  };
 
-  app = express();
+  var logRequests = function() {
+    var d, fps;
+    d = Date.parse(new Date()) / 1000;
+    if (requests[d] > 0) {
+      return requests[d]++;
+    } else {
+      fps = requests[d - 1];
+      requests = {};
+      requests[d] = 1;
+      if (fps) {
+        return console.log(fps + " fps");
+      }
+    }
+  };
+
+
+  /********
+  *
+  * Express app part
+  *
+  * Every API routes here
+  *********/
 
   app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -265,21 +314,6 @@
   app.get('/', function(req, res) {
     return res.render('index.html');
   });
-
-  logRequests = function() {
-    var d, fps;
-    d = Date.parse(new Date()) / 1000;
-    if (requests[d] > 0) {
-      return requests[d]++;
-    } else {
-      fps = requests[d - 1];
-      requests = {};
-      requests[d] = 1;
-      if (fps) {
-        return console.log(fps + " fps");
-      }
-    }
-  };
 
   app.get('/api/status', function(req, res) {
     var model = 'Not connected';
@@ -506,24 +540,6 @@
       return res.sendStatus(200);
     }
   });
-
-  var stream = function() {
-    return camera.takePicture({
-      preview: true,
-      targetPath: '/tmp/stream/foo.XXXXXXX'
-    }, function(er, data) {
-        if (er) {
-          on_error(er);
-        } else {
-          // success
-        }
-        // TODO: stop retrying after many errors
-        if (is_streaming) {
-          setTimeout(stream(), 0);
-        }
-      });
-
-  };
 
   app.get('/api/stream/stop', function(req, res) {
     is_streaming = false;
