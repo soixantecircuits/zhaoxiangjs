@@ -222,7 +222,7 @@
             } else {
               return camera.takePicture({
                 download: true,
-                targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+                targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg'
               }, function(er, data) {
                   if (er) {
                     on_error(er);
