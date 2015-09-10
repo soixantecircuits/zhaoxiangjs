@@ -222,13 +222,14 @@
             } else {
               return camera.takePicture({
                 download: true,
-                targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+                targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
               }, function(er, data) {
                   if (er) {
                     on_error(er);
                   } else {
                     lastPicture = data;
                     console.log('lastPicture: ' + lastPicture);
+                    socket.emit('photoTaken');
                   }
                 });
             }
