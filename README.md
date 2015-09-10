@@ -34,3 +34,7 @@ If something wrong with your camera, try some basic commands with the gphoto2 ut
 
 `gphoto2 --auto-detect --list-config`
 `gphoto2 --auto-detect --capture-image-and-download`
+
+# PM2
+
+If you're using Zhaoxiang with PM2, be sure to power on the camera before power on the computer to prevent errors. If camera isn't detected, power off/on the camera, and then restart the mp2 app. 
