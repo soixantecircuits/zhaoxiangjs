@@ -176,6 +176,15 @@
   }
   loadSettings();
 
+  function guid() {
+    function s4() {
+      return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+      s4() + '-' + s4() + s4() + s4();
+  }
 
   gphoto.list(function(cameras) {
     console.log(cameras[0]);
@@ -224,13 +233,15 @@
             } else {
               return camera.takePicture({
                 download: true,
-                targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg'
+                // targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
               }, function(er, data) {
                   if (er) {
                     console.log('Error in taking photo');
                     on_error(er);
                   } else {
-                    lastPicture = data;
+                    var path = config.snapPath+'/snap-'+ guid() +'.jpg';
+                    fs.writeFileSync(path, data);
+                    lastPicture = path;
                     console.log('lastPicture: ' + lastPicture);
                     socket.emit('photoTaken');
                   }
