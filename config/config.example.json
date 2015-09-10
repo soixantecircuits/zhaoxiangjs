@@ -8,6 +8,6 @@
     "text": "Hello"
   },
   "debug": true,
-  "countdownDuration": 3,
+  "countdownDuration": 4.2,
   "snapPath": "/your/path/here"
 }

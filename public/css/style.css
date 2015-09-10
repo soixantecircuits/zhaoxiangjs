@@ -1,5 +1,6 @@
 body {
   margin: 0;
+  background: white;
 }
 img {
   height: 100%;
@@ -17,4 +18,13 @@ img {
   color: white;
   font-family: 'Avenir';
   font-weight: 600;
+  display: none;
+}
+
+#counter .jsgif {
+  position: relative;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
 }
