@@ -31,7 +31,7 @@ var Main = (function(my, GPhoto){
   };
 
   my.initStream = function(){
-    GPhoto.startPreview();
+    GPhoto.startPreview(8088);
   };
 
   my.init = function(){

@@ -11,8 +11,9 @@ GPhoto = (function() {
     this.settings = {};
   }
 
-  GPhoto.prototype.startPreview = function() {
-    $('#mainImage').attr('src', 'http://' + window.location.hostname + ':8080' + '/?action=stream');
+  GPhoto.prototype.startPreview = function(port) {
+    port = port || '8080';
+    $('#mainImage').attr('src', 'http://' + window.location.hostname + ':'+ port + '/?action=stream');
     request.get('/api/stream/start', function(res){
       console.log(res);
     });
