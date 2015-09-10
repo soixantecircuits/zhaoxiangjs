@@ -141,7 +141,8 @@
     else if (last_error == -1) {
       console.error("Exiting because -1 error causes an error of retrieving the last picture at next shoot");
     }
-    slackit(er);
+    // To define
+    // slackit(er);
     //setTimeout(function(){process.exit(-1);},1000);
   }
 
