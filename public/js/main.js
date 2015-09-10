@@ -2,7 +2,6 @@ var Main = (function(my, GPhoto){
   
   my.initSocket = function(){
     var socket = io.connect('http://localhost:1789');
-    console.log('salut');
     socket.on('countdown', function(duration){
       my.countdown(duration, document.getElementById('counter'), function(){
         console.log('shot taken');
