@@ -219,6 +219,7 @@
           ioServer.emit('countdown', config.countdownDuration);
           setTimeout(function(){
             if (!camera) {
+              console.log('No camera');
               on_error(er);
             } else {
               return camera.takePicture({
@@ -226,6 +227,7 @@
                 targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg'
               }, function(er, data) {
                   if (er) {
+                    console.log('Error in taking photo');
                     on_error(er);
                   } else {
                     lastPicture = data;
