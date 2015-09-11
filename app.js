@@ -10,6 +10,7 @@
   var bodyParser = require('body-parser');
   var mkdirp = require('mkdirp');
   var io = require('socket.io-client');
+  var im = require('imagemagick');
 
   var app = require('express')();
   var server = app.listen(1789);
@@ -241,6 +242,18 @@
                   } else {
                     var path = config.snapPath+'/snap-'+ guid() +'.jpg';
                     fs.writeFileSync(path, data);
+                    im.crop({
+                      srcPath: path,
+                      dstPath: path,
+                      width: config.snapSize.width,
+                      height: config.snapSize.height,
+                      quality: 1,
+                      gravity: "NorthWest"
+                    }, function(err, stdout, stderr){
+                      if(err){
+                        console.log(err);
+                      }
+                    });
                     lastPicture = path;
                     console.log('lastPicture: ' + lastPicture);
                     socket.emit('photoTaken');

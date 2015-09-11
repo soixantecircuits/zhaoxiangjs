@@ -2,10 +2,6 @@ body {
   margin: 0;
   background: white;
 }
-img {
-  height: 100%;
-  width: 100%;
-}
 #counter {
   width: 100%;
   height: 100%;
@@ -22,9 +18,14 @@ img {
 }
 
 #counter .jsgif {
-  position: relative;
-  top: 50%;
-  -webkit-transform: translateY(-50%);
-  -ms-transform: translateY(-50%);
-  transform: translateY(-50%);
+
+}
+#imageWrap {
+  height: 100vw;
+  width: 100vw;
+  overflow: hidden;
+}
+#imageWrap img{
+  height: 100%;
+  width: auto;
 }

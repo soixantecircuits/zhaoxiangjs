@@ -9,5 +9,9 @@
   },
   "debug": true,
   "countdownDuration": 4.2,
-  "snapPath": "/your/path/here"
+  "snapPath": "/your/path/here",
+  "snapSize": {
+    "height": 480,
+    "width": 480
+  }
 }
