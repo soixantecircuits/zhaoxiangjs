@@ -232,18 +232,18 @@
               console.log('No camera');
               on_error(er);
             } else {
+              var basePath = '/tmp/snaps/snap-' + guid() + '-XXXXXXX'
               return camera.takePicture({
                 download: true,
-                // targetPath: config.snapPath+'/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+                targetPath: basePath
               }, function(er, data) {
                   if (er) {
                     console.log('Error in taking photo');
                     on_error(er);
                   } else {
                     var path = config.snapPath+'/snap-'+ guid() +'.jpg';
-                    fs.writeFileSync(path, data);
                     im.crop({
-                      srcPath: path,
+                      srcPath: basePath,
                       dstPath: path,
                       width: config.snapSize.width,
                       height: config.snapSize.height,
