@@ -24,6 +24,11 @@ body {
   height: 100vw;
   width: 100vw;
   overflow: hidden;
+  position: relative;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 #imageWrap img{
   height: 100%;
