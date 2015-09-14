@@ -232,16 +232,16 @@
               console.log('No camera');
               on_error(er);
             } else {
-              var basePath = '/tmp/snaps/snap-' + guid() + '-XXXXXXX'
               return camera.takePicture({
                 download: true,
-                targetPath: basePath
               }, function(er, data) {
                   if (er) {
                     console.log('Error in taking photo');
                     on_error(er);
                   } else {
+                    var basePath = '/tmp/snaps/snap-' + guid() + '-XXXXXXX.jpg';
                     var path = config.snapPath+'/snap-'+ guid() +'.jpg';
+                    fs.writeFileSync(basePath, data);
                     im.crop({
                       srcPath: basePath,
                       dstPath: path,

@@ -1,5 +1,6 @@
 var Main = (function(my, GPhoto){
   my.gif = {};
+  my.showGui = false;
 
   my.initSocket = function(){
     var socket = io.connect('http://localhost:1789');
@@ -23,7 +24,7 @@ var Main = (function(my, GPhoto){
   };
 
   my.initStream = function(){
-    GPhoto.startPreview(8088);
+    window.gphoto.startPreview(8088);
   };
 
   my.initGif = function(){
@@ -38,15 +39,22 @@ var Main = (function(my, GPhoto){
         });
       }
     });
-  }
+  };
+  my.initGphoto = function(){
+    window.gphoto = new GPhoto();
+    if(my.showGui){
+      window.gphoto.displaySettings();
+    }
+  };
 
   my.init = function(){
+    my.initGphoto();
     my.initSocket();
     my.initStream();
     my.initGif();
   };
 
   return my;
-}(Main || {}, window.gphoto || {}));
+}(Main || {}, GPhoto || {}));
 
 Main.init();
