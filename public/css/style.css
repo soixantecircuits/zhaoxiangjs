@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  background: white;
+  background: #EAEAEA;
 }
 #counter {
   width: 100%;
@@ -17,8 +17,12 @@ body {
   display: none;
 }
 
-#counter .jsgif {
-
+#counter img {
+  position: relative;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 #imageWrap {
   height: 100vw;
