@@ -71,7 +71,7 @@
   });
 
   ioServer.on('connection', function(socket){
-    console.log('New client connected');
+    console.log('io server: New client connected');
   });
 
 /*  
@@ -119,7 +119,7 @@
     cam_id = host.match(/voldenuit(.*)/)[1];
   } catch (err) {
     //console.log(err);
-    console.log('Apparently this computer is not in the team, check your hostname.');
+    //console.log('Apparently this computer is not in the team, check your hostname.');
   }
 
   mkdirp('/tmp/stream', function(err) {
@@ -152,7 +152,7 @@
 
     //client.send('/picamera-osc/settings', param, value);
     client.invoke("set_setting", param, value, function(error, data, more) {
-      console.log(data);
+      console.log("settings: " + data);
     });
 
 
@@ -188,7 +188,7 @@
   }
 
   gphoto.list(function(cameras) {
-    console.log(cameras[0]);
+    console.log("camera 0 : " + cameras[0]);
     camera = cameras[0];
     // camera = _(cameras).chain().filter(function(camera) {
     //   return camera.model.match(/(Canon|Nikon)/);
