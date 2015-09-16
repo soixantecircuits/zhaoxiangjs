@@ -27,6 +27,9 @@ body {
 #imageWrap {
   height: 100vw;
   width: 100vw;
+  max-width: 1080px;
+  max-height: 1080px;
+  margin: auto;
   overflow: hidden;
   position: relative;
   top: 50%;
