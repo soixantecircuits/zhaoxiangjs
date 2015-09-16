@@ -2,7 +2,8 @@ var Main = (function(my, GPhoto){
   my.gif = {};
   my.showGui = false;
   my.nbImgCountdownAnim = 7;
-  my.imgDuration = 400;
+  my.imgDuration = 500;
+  my.totalAnimDuration = my.imgDuration*7 + 2*my.imgDuration;
 
   my.initSocket = function(){
     var socket = io.connect('http://localhost:1789');
