@@ -247,8 +247,10 @@
                       dstPath: path,
                       width: config.snapSize.width,
                       height: config.snapSize.height,
-                      quality: 1,
-                      gravity: "NorthWest"
+                      x: 0,
+                      y: 0,
+                      quality: 7,
+                      gravity: "Center"
                     }, function(err, stdout, stderr){
                       if(err){
                         console.log(err);
@@ -404,13 +406,33 @@
         return res.send(404, 'Camera not connected');
       } else {
         return camera.takePicture({
-          targetPath: '/tmp/foo.XXXXXXX'
+	  download: true
+          //targetPath: '/tmp/foo.XXXXXXX'
         }, function(er, data) {
             if (er) {
               on_error(er);
               return res.send(404, er);
             } else {
-              lastPicture = data;
+        	    var basePath = '/tmp/snaps/snap-' + guid() + '-XXXXXXX.jpg';
+                    var path = config.snapPath+'/snap-'+ guid() +'.jpg';
+                    fs.writeFileSync(basePath, data);
+                    im.crop({
+                      srcPath: basePath,
+                      dstPath: path,
+                      width: config.snapSize.width,
+                      height: config.snapSize.height,
+                      x: config.snapSize.x,
+                      y: config.snapSize.y,
+                      quality: 7,
+                      gravity: "Center"
+                    }, function(err, stdout, stderr){
+                      if(err){
+                        console.log(err);
+                      }
+                    });
+                    lastPicture = path;
+		    console.log('path: ' + lastPicture);
+
               return res.send('/api/lastpicture/' + req.params.format);
             }
           });

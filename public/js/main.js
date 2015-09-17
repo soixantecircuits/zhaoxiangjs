@@ -66,7 +66,7 @@ var Main = (function(my, GPhoto){
   }
 
   my.initStream = function(){
-    window.gphoto.startPreview(8088);
+    //window.gphoto.startPreview(8088);
   };
 
   my.initGphoto = function(){
