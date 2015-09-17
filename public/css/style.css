@@ -1,5 +1,12 @@
 body {
   margin: 0;
+  background: black;
+  -webkit-transition: background 250ms ease;
+  -moz-transition: background 250ms ease;
+  -o-transition: background 250ms ease;
+  transition: background 250ms ease;
+}
+body.countdown {
   background: #EAEAEA;
 }
 #counter {
@@ -33,6 +40,7 @@ body {
   overflow: hidden;
   position: relative;
   top: 50%;
+  display: none;
   -webkit-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);

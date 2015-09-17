@@ -63,7 +63,7 @@
   };
 
   var zerorpc = require("zerorpc");
-
+  
   var client = new zerorpc.Client();
   client.connect("tcp://127.0.0.1:4242");
   client.on("error", function(error) {
@@ -255,7 +255,7 @@
                       }
                     });
                     lastPicture = path;
-                    console.log('lastPicture: ' + lastPicture);
+                    console.log('lastPicture: '+lastPicture);
                     socket.emit('photoTaken');
                   }
                 });
@@ -455,7 +455,12 @@
         return res.send(404, er);
       } else {
         res.header('Content-Type', 'image/' + req.params.format);
-        return res.send(data);
+        if(req.params.format == 'base64'){
+          var base64LastPic = new Buffer(data, 'binary').toString('base64');
+          return res.send(base64LastPic);
+        } else {
+          return res.send(data);
+        }
       }
     });
   });

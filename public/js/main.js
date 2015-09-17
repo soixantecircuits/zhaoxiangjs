@@ -2,8 +2,7 @@ var Main = (function(my, GPhoto){
   my.gif = {};
   my.showGui = false;
   my.nbImgCountdownAnim = 7;
-  my.imgDuration = 500;
-  my.totalAnimDuration = my.imgDuration*7 + 2*my.imgDuration;
+  my.animDurationArray = [1600,700,700,700,700,1400,1800];
 
   my.initSocket = function(){
     var socket = io.connect('http://localhost:1789');
@@ -16,15 +15,21 @@ var Main = (function(my, GPhoto){
     $('#imageWrap').fadeOut(400);
     $('#counter').fadeIn(400, function() {
       my.countdownAnimation.play(function(){
-        my.showStream();
+        setTimeout(function(){
+          window.gphoto.getLastPicture(function(){
+            my.showStream(function(){
+              setTimeout(function(){$('#imageWrap').fadeOut(400);}, 5000);
+            });
+          });
+        }, 500);
       });
     });
   };
 
-  my.showStream = function(){
+  my.showStream = function(callback){
     $('#counter').fadeOut(400);
-    $('#imageWrap').fadeIn(400);
-  }
+    $('#imageWrap').fadeIn(400, callback);
+  };
 
   my.countdownAnimation = {
     images: [],
@@ -39,27 +44,34 @@ var Main = (function(my, GPhoto){
         this.images[i].src = path;
       }
     },
-    changeAnimImg: function(index, options, callback){
+    changeAnimImg: function(index, callback){
       var _self = this;
       // Make first image stay longer
-      var delay = (index != 0) ? index*my.imgDuration + my.imgDuration : index*my.imgDuration;
+      var delay = 0;
+      for(var i = 0; i < index; i++){
+        delay +=   my.animDurationArray[i];
+      }
       setTimeout(function(){ 
         _self.target.src = _self.images[index].src;
         if(typeof callback == 'function'){
-          setTimeout(function(){ _self.target.src = ''; callback(); }, my.imgDuration*2);
+          setTimeout(function(){ _self.target.src = ''; callback(); },  my.animDurationArray[index]);
         } 
       }, delay);
     },
     // Play animation
     play: function(callback){
       var _self = this;
+      $('body').addClass('countdown');
       for(var i=0; i<_self.images.length; i++){
         var extendendDuration = false;
-        if(i==0){extendedDuration = true;} else {extendedDuration = false;}
+
         if(i+1 == _self.images.length){
-          this.changeAnimImg(i,{extendedDuration: extendedDuration} ,callback);
+          this.changeAnimImg(i, function(){
+            $('body').removeClass('countdown');
+            callback();
+          });
         } else {
-          this.changeAnimImg(i, {extendedDuration: extendedDuration});
+          this.changeAnimImg(i);
         }
       }
     },
@@ -79,7 +91,7 @@ var Main = (function(my, GPhoto){
   my.init = function(){
     my.initGphoto();
     my.initSocket();
-    my.initStream();
+    // my.initStream();
     my.countdownAnimation.init();
   };
 

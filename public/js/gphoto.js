@@ -19,6 +19,23 @@ GPhoto = (function() {
     });
   };
 
+  GPhoto.prototype.getLastPicture = function(callback) {
+    console.log('get last picture');
+    // var lastPictureInterval = setInterval(function(){
+      request
+      .get('/api/lastpicture/base64')
+      .end(function(res){
+        console.log(res);
+        if(res.error){
+          console.log(res.error);
+        } else {
+          $('#mainImage').attr('src','data:image/jpeg;base64,'+res.text);
+          callback();
+        }
+      });
+    // }, 100);
+  };
+
   GPhoto.prototype.stopPreview = function() {
     $('#mainImage').attr('src', '');
   };
