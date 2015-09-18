@@ -8,7 +8,7 @@
     "text": "Hello"
   },
   "debug": true,
-  "countdownDuration": 4.5,
+  "countdownDuration": 7.2,
   "snapPath": "/your/path/here",
   "snapSize": {
     "height": 480,

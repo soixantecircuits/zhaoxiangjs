@@ -2,7 +2,16 @@ var Main = (function(my, GPhoto){
   my.gif = {};
   my.showGui = false;
   my.nbImgCountdownAnim = 7;
-  my.animDurationArray = [1600,700,700,700,700,1400,1800];
+  my.animDurationArray = [1600,700,700,700,700,1400,1400];
+
+
+  my.getTotalAnimationDuration = function(){
+    var totalDuration = 0;
+    my.animDurationArray.forEach(function(element){
+      totalDuration += element;
+    });
+    return totalDuration;
+  };
 
   my.initSocket = function(){
     var socket = io.connect('http://localhost:1789');
@@ -15,13 +24,9 @@ var Main = (function(my, GPhoto){
     $('#imageWrap').fadeOut(400);
     $('#counter').fadeIn(400, function() {
       my.countdownAnimation.play(function(){
-        setTimeout(function(){
-          window.gphoto.getLastPicture(function(){
-            my.showStream(function(){
-              setTimeout(function(){$('#imageWrap').fadeOut(400);}, 5000);
-            });
-          });
-        }, 500);
+        my.showStream(function(){
+          setTimeout(function(){$('#imageWrap').fadeOut(400);}, 5000);
+        });
       });
     });
   };
