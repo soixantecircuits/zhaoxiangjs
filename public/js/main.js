@@ -61,15 +61,11 @@ var Main = (function(my, GPhoto){
     // Play animation
     play: function(callback){
       var _self = this;
-      $('body').addClass('countdown');
       for(var i=0; i<_self.images.length; i++){
         var extendendDuration = false;
 
         if(i+1 == _self.images.length){
-          this.changeAnimImg(i, function(){
-            $('body').removeClass('countdown');
-            callback();
-          });
+          this.changeAnimImg(i, callback);
         } else {
           this.changeAnimImg(i);
         }

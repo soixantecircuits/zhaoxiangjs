@@ -6,9 +6,6 @@ body {
   -o-transition: background 250ms ease;
   transition: background 250ms ease;
 }
-body.countdown {
-  background: #EAEAEA;
-}
 #counter {
   width: 100%;
   height: 100%;
