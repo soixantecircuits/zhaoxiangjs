@@ -3,7 +3,11 @@ var Main = (function(my, GPhoto){
   my.showGui = false;
   my.nbImgCountdownAnim = 7;
   my.animDurationArray = [1600,700,700,700,700,1400,1400];
+  my.showLastPicTimeout = {};
 
+  my.$cdHolder = $('#counter');
+  my.$imgHolder = $('#imageWrap');
+  my.$mainImg = $('#mainImage');
 
   my.getTotalAnimationDuration = function(){
     var totalDuration = 0;
@@ -18,22 +22,34 @@ var Main = (function(my, GPhoto){
     socket.on('countdown', function(duration){
       my.showGifCount(duration);
     });
+    socket.on('lastPicture', function(imgData){
+      my.$mainImg.attr('src','data:image/jpeg;base64,'+imgData);
+      my.showStream(function(){
+        my.showLastPicTimeout = setTimeout(function(){my.clearLastPicture();}, 5000);
+      });
+    });
+  };
+
+  my.clearLastPicture = function(){
+    clearTimeout(my.showLastPicTimeout);
+    my.$imgHolder.fadeOut(400, function(){
+      my.$mainImg.attr('src','');
+    });
   };
 
   my.showGifCount = function(duration){
-    $('#imageWrap').fadeOut(400);
-    $('#counter').fadeIn(400, function() {
+    my.clearLastPicture();
+    my.$imgHolder.fadeOut(400);
+    my.$cdHolder.fadeIn(400, function() {
       my.countdownAnimation.play(function(){
-        my.showStream(function(){
-          setTimeout(function(){$('#imageWrap').fadeOut(400);}, 5000);
-        });
+        my.$cdHolder.fadeOut(400);
       });
     });
   };
 
   my.showStream = function(callback){
-    $('#counter').fadeOut(400);
-    $('#imageWrap').fadeIn(400, callback);
+    my.$cdHolder.fadeOut(400);
+    my.$imgHolder.fadeIn(400, callback);
   };
 
   my.countdownAnimation = {
@@ -79,11 +95,13 @@ var Main = (function(my, GPhoto){
   }
 
   my.initStream = function(){
-    //window.gphoto.startPreview(8088);
+    window.gphoto.startPreview(8088);
   };
 
   my.initGphoto = function(){
-    window.gphoto = new GPhoto();
+    window.gphoto = new GPhoto({
+      $mainImg: my.$mainImg
+    });
     if(my.showGui){
       window.gphoto.displaySettings();
     }

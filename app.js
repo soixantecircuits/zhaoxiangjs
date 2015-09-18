@@ -255,6 +255,11 @@
                       if(err){
                         console.log(err);
                       }
+                      fs.readFile(lastPicture, function(err, data){
+                        if(err) throw err;
+                        var base64LastPic = new Buffer(data, 'binary').toString('base64');
+                        ioServer.emit('lastPicture', base64LastPic);
+                      });
                     });
                     lastPicture = path;
                     console.log('lastPicture: '+lastPicture);
@@ -477,12 +482,7 @@
         return res.send(404, er);
       } else {
         res.header('Content-Type', 'image/' + req.params.format);
-        if(req.params.format == 'base64'){
-          var base64LastPic = new Buffer(data, 'binary').toString('base64');
-          return res.send(base64LastPic);
-        } else {
-          return res.send(data);
-        }
+        return res.send(data);
       }
     });
   });

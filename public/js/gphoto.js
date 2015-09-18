@@ -9,35 +9,21 @@ GPhoto = (function() {
     this.enumSettings = __bind(this.enumSettings, this);
     this.loadSettings = __bind(this.loadSettings, this);
     this.settings = {};
+    this.$mainImg = config.$mainImg || $('#mainImg');
   }
 
   GPhoto.prototype.startPreview = function(port) {
+    var _self = this;
     port = port || '8080';
-    $('#mainImage').attr('src', 'http://' + window.location.hostname + ':'+ port + '/?action=stream');
+    _self.$mainImg.attr('src', 'http://' + window.location.hostname + ':'+ port + '/?action=stream');
     request.get('/api/stream/start', function(res){
       console.log(res);
     });
   };
 
-  GPhoto.prototype.getLastPicture = function(callback) {
-    console.log('get last picture');
-    // var lastPictureInterval = setInterval(function(){
-      request
-      .get('/api/lastpicture/base64')
-      .end(function(res){
-        console.log(res);
-        if(res.error){
-          console.log(res.error);
-        } else {
-          $('#mainImage').attr('src','data:image/jpeg;base64,'+res.text);
-          callback();
-        }
-      });
-    // }, 100);
-  };
-
   GPhoto.prototype.stopPreview = function() {
-    $('#mainImage').attr('src', '');
+    var _self = this;
+    _self.$mainImg.attr('src', '');
   };
 
   GPhoto.prototype.loadSettings = function(cb) {
@@ -92,6 +78,7 @@ GPhoto = (function() {
   };
 
   GPhoto.prototype.displaySettings = function() {
+    var _self = this;
     var foo;
     if (!this.gui) {
       this.gui = new dat.GUI();
@@ -107,7 +94,7 @@ GPhoto = (function() {
           return request.get('/api/shoot/jpeg', function(res) {
             console.log(res);
             if (res.text) {
-              $('#mainImage').attr('src', res.text + '?' + new Date().getTime());
+              _self.$mainImg.attr('src', res.text + '?' + new Date().getTime());
               $('<a>').attr('href', res.text).text(res.text).appendTo($('#downloads')).css({
                 'display': 'block'
               });
