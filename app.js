@@ -31,38 +31,39 @@
   if (isRaspicam){
     var settings_path = './picamera-settings.json';
     var settings = require(settings_path);
+
+    // https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
+    var raspicam_options = {
+          mode: "photo",
+          output: "/tmp/snap.jpg",
+          encoding: "jpg",
+          sharpness: 0,
+          contrast: 0,
+          brightness: 50,
+          saturation: 0,
+          ISO: 400,
+          ev: 0, // Exposure Compensation
+          //exposure: 'night', 
+          awb: 'fluorescent',
+          imxfx: 'none', // image effect
+          colfx: '127:127',
+          metering: 'average',
+          shutter: 1000, // in microsecondes
+          drc : 'off', // improve for low light areas
+          stats: true,
+          awbgains: '1,1', // Sets blue and red gains
+          //mode: 7, // conflicts with mode above
+          quality: 100,
+    };
+
+    var zerorpc = require("zerorpc");
+
+    var client = new zerorpc.Client();
+    client.connect("tcp://127.0.0.1:4242");
+    client.on("error", function(error) {
+          console.error("RPC client error:", error);
+    });
   }
-  // https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
-  var raspicam_options = {
-        mode: "photo",
-        output: "/tmp/snap.jpg",
-        encoding: "jpg",
-        sharpness: 0,
-        contrast: 0,
-        brightness: 50,
-        saturation: 0,
-        ISO: 400,
-        ev: 0, // Exposure Compensation
-        //exposure: 'night', 
-        awb: 'fluorescent',
-        imxfx: 'none', // image effect
-        colfx: '127:127',
-        metering: 'average',
-        shutter: 1000, // in microsecondes
-        drc : 'off', // improve for low light areas
-        stats: true,
-        awbgains: '1,1', // Sets blue and red gains
-        //mode: 7, // conflicts with mode above
-        quality: 100,
-  };
-
-  var zerorpc = require("zerorpc");
-
-  var client = new zerorpc.Client();
-  client.connect("tcp://127.0.0.1:4242");
-  client.on("error", function(error) {
-        console.error("RPC client error:", error);
-  });
 
 /*
   setInterval(function(){client.invoke("hello", "World!", function(error, res, more) {
@@ -142,7 +143,7 @@
 
     //client.send('/picamera-osc/settings', param, value);
     client.invoke("set_setting", param, value, function(error, data, more) {
-      console.log(data);
+      console.log("setting data: " + data);
     });
 
 
@@ -169,7 +170,7 @@
 
 
   gphoto.list(function(cameras) {
-    console.log(cameras[0]);
+    console.log("First camera: " + cameras[0]);
     camera = cameras[0];
     // camera = _(cameras).chain().filter(function(camera) {
     //   return camera.model.match(/(Canon|Nikon)/);
@@ -218,7 +219,7 @@
                   on_error(er);
                 } else {
                   lastPicture = data;
-                  console.log('lastPicture: ' + lastPicture);
+                  //console.log('lastPicture: ' + lastPicture);
                 }
               });
           }
@@ -310,7 +311,7 @@
               return res.send(404, er);
             } else {
               lastPicture = data;
-              console.log('lastPicture: ' + lastPicture);
+              //console.log('lastPicture: ' + lastPicture);
               return res.send(lastPicture);
             }
           });
@@ -506,11 +507,25 @@
       return res.sendStatus(200);
     }
   });
+  
+  var index_stream = 0;
+
+  var zeroFill = function( number, width )
+  {
+    width -= number.toString().length;
+    if ( width > 0 )
+    {
+      return new Array( width + (/\./.test( number ) ? 2 : 1) ).join( '0' ) + number;
+    }
+    return number + ""; // always return a string
+  }
 
   var stream = function() {
+    index_stream++;
     return camera.takePicture({
       preview: true,
-      targetPath: '/tmp/stream/foo.XXXXXXX'
+      targetPath: '/tmp/stream/foo.'+zeroFill(index_stream,7)+'.XXXXXXX'
+      //targetPath: '/tmp/stream/foo.XXXXXXX'
     }, function(er, data) {
         if (er) {
           on_error(er);
