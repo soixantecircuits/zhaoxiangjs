@@ -206,6 +206,12 @@
       .on('connect', function() {
         console.log('socketio connected.');
       })
+      .on('stream', function(isstreaming) {
+        is_streaming = isstreaming;
+        if (is_streaming){
+          setTimeout(stream(), 0);
+        }
+      })
       .on('shoot', function(snap_id) {
         if (!isRaspicam){
           if (!camera) {
