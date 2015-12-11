@@ -15,7 +15,7 @@
   var diff = require('deep-diff').diff;
   var RaspiCam = require("raspicam");
   var osc = require('node-osc');
-  var client = new osc.Client('127.0.0.1', 3333); 
+  //var client = new osc.Client('127.0.0.1', 3333); 
 
   var config = require('./config/config.json');
   var utils = require('./utils');
@@ -27,8 +27,18 @@
   var is_streaming = false;
   var stream_folder = '/tmp/stream/';
   var last_error = 0;
-  var cam_id = 0;
+  var id_computer = 0;
+  var id_camera = 0;
   var isRaspicam = config.camera == "raspicam";
+
+  console.log(argv);
+  if (argv.c != undefined) {
+    id_camera = argv.c;
+    console.log("Select camera: " + argv.c);
+  }
+
+
+
   console.log("isRaspicam :" + isRaspicam);
   if (isRaspicam){
     var settings_path = './picamera-settings.json';
@@ -110,7 +120,7 @@
   // TODO: do not use try/catch?
   try {
     // TODO: USE a config file for the hostname
-    cam_id = host.match(/voldenuit(.*)/)[1];
+    id_computer = host.match(/voldenuit(.*)/)[1];
   } catch (err) {
     //console.log(err);
     console.log('Apparently this computer is not in the team, check your hostname.');
@@ -172,8 +182,8 @@
 
 
   gphoto.list(function(cameras) {
-    console.log("First camera: " + cameras[0]);
-    camera = cameras[0];
+    console.log("Camera: " + cameras[id_camera]);
+    camera = cameras[id_camera];
     // camera = _(cameras).chain().filter(function(camera) {
     //   return camera.model.match(/(Canon|Nikon)/);
     // }).first().value();
@@ -209,15 +219,18 @@
         console.log('socketio connected.');
       })
       .on('/zhaoxiangjs/stream', function(data) {
-        is_streaming = data.is_streaming;
-        if (data.path) {
-          stream_folder = data.path;
-          mkdirp(stream_folder, function(err) {
-            if (err) console.error(err)
-          });
-        }
-        if (is_streaming){
-          setTimeout(stream(), 0);
+        if (data.camera == id_camera){
+          is_streaming = data.is_streaming;
+          console.log("stream: " + is_streaming);
+          if (data.path) {
+            stream_folder = data.path;
+            mkdirp(stream_folder, function(err) {
+              if (err) console.error(err)
+            });
+          }
+          if (is_streaming){
+            setTimeout(stream(), 0);
+          }
         }
       })
       .on('shoot', function(snap_id) {
@@ -227,7 +240,7 @@
           } else {
             return camera.takePicture({
               download: true,
-              targetPath: '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX'
+              targetPath: '/tmp/snaps/snap-' + snap_id + '-' + id_computer + '-XXXXXXX'
             }, function(er, data) {
                 if (er) {
                   on_error(er);
@@ -239,7 +252,7 @@
           }
         }  
         else {
-          raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + cam_id + '-XXXXXXX.jpg';
+          raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + id_computer + '-XXXXXXX.jpg';
           //client.send('/picamera-osc/shoot', raspicam_options.output);
           client.invoke("shoot", raspicam_options.output, function(error, data, more) {
             console.log("photo image captured with filename: " + data );
@@ -609,6 +622,10 @@
           });
       }
     }
+  });
+
+  process.on('uncaughtException', function (er) {
+      console.error('warning ' + er.stack) 
   });
 
   app.listen(process.env.PORT || 1337, "0.0.0.0");
