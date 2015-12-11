@@ -3,6 +3,7 @@
 
   var util = require('util');
   var fs = require('fs');
+  var path = require('path');
   var _ = require('lodash');
 
   var GPhoto = require('gphoto2');
@@ -24,6 +25,7 @@
   var argv = require('minimist')(process.argv.slice(2));
   var lastPicture;
   var is_streaming = false;
+  var stream_folder = '/tmp/stream/';
   var last_error = 0;
   var cam_id = 0;
   var isRaspicam = config.camera == "raspicam";
@@ -206,8 +208,14 @@
       .on('connect', function() {
         console.log('socketio connected.');
       })
-      .on('stream', function(isstreaming) {
-        is_streaming = isstreaming;
+      .on('/zhaoxiangjs/stream', function(data) {
+        is_streaming = data.is_streaming;
+        if (data.path) {
+          stream_folder = data.path;
+          mkdirp(stream_folder, function(err) {
+            if (err) console.error(err)
+          });
+        }
         if (is_streaming){
           setTimeout(stream(), 0);
         }
@@ -530,7 +538,7 @@
     index_stream++;
     return camera.takePicture({
       preview: true,
-      targetPath: '/tmp/stream/foo.'+zeroFill(index_stream,7)+'.XXXXXXX'
+      targetPath: path.join(stream_folder,'foo.'+zeroFill(index_stream,7)+'.XXXXXXX')
       //targetPath: '/tmp/stream/foo.XXXXXXX'
     }, function(er, data) {
         if (er) {
