@@ -20,6 +20,10 @@
   var config = require('./config/config.json');
   var utils = require('./utils');
 
+  var Segfault = require('segfault');
+ 
+  Segfault.registerHandler("errors.txt");
+
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref;
   // TODO: recognize options, -f is for no camera
   var argv = require('minimist')(process.argv.slice(2));
@@ -220,7 +224,8 @@
       })
       .on('/zhaoxiangjs/stream', function(data) {
         if (data.camera == id_camera){
-          is_streaming = data.is_streaming;
+          //is_streaming = data.is_streaming;
+          is_streaming = true;
           console.log("stream: " + is_streaming);
           if (data.path) {
             stream_folder = data.path;
@@ -228,8 +233,25 @@
               if (err) console.error(err)
             });
           }
+          if (data.is_streaming == false){
+            stream_folder = "/tmp/stream";
+          }
+
           if (is_streaming){
             setTimeout(stream(), 0);
+          }
+          else{
+            camera.takePicture({
+              download: true,
+              targetPath: '/tmp/snaps/snap-' + '-XXXXXXX'
+            },function(er, data) {
+                if (er) {
+                  on_error(er);
+                } else {
+                  lastPicture = data;
+                  //console.log('lastPicture: ' + lastPicture);
+                }
+            });
           }
         }
       })
