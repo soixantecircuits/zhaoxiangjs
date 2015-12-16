@@ -182,33 +182,48 @@
 
 
   gphoto.list(function(cameras) {
-    console.log("Camera: " + cameras[id_camera]);
-    camera = cameras[id_camera];
-    // camera = _(cameras).chain().filter(function(camera) {
-    //   return camera.model.match(/(Canon|Nikon)/);
-    // }).first().value();
-    //if (camera)
-      //console.log("found " + cameras.length + " cameras");
-    if (!camera && !argv.f) {
-      //console.log('Exit - no camera found, sorry. :(');
-      //process.exit(-1);
-    } else if (camera) {
-      console.log("port: " + camera.port);
-      console.log("loading " + camera.model + " settings");
-      // TODO: uniform error handling
-      return camera.getConfig(function(er, settings) {
-        if (er) {
-          last_error = er;
-          console.log(er);
-          console.error({
-            camera_error: er
-          });
-
-          utils.restart_usb();
-          //process.exit(-1);
+    if (cameras.length == 0 && !argv.f) {
+      console.log('Exit - no camera found, sorry. :(');
+      process.exit(-1);
+    }
+    cameras.forEach(function(onecamera, index){
+        console.log("Camera: " + onecamera.model);
+        console.log("port: " + onecamera.port);
+        if (config.camera_usb_buses == undefined){
+          if (index == id_camera){
+            camera = onecamera;
+          }
+          else {
+            return;
+          }
         }
-        return console.log(settings);
-      });
+        else {
+          var port = config.camera_usb_buses[id_camera];
+          if ( onecamera.port.charAt(6) == port){
+            camera = onecamera;
+          }
+          else {return;}
+        }
+        console.log("loading " + camera.model + " settings");
+        // TODO: uniform error handling
+        return camera.getConfig(function(er, settings) {
+          if (er) {
+            last_error = er;
+            console.log(er);
+            console.error({
+              camera_error: er
+            });
+
+            utils.restart_usb();
+            //process.exit(-1);
+          }
+          return console.log(settings);
+        });
+    });
+
+    if (camera == undefined && !argv.f) {
+      console.log('Could not find a camera matching with you config file');
+      process.exit(-1);
     }
   });
 
