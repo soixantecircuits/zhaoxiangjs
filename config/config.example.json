@@ -2,6 +2,7 @@
   "servicelookup": {
     "name": "remote"
   },
+  "camera_usb_buses": [1, 3],
   "slack": { 
     "token": "XXXXX/XXXX/XXX", 
     "channel": "#general",
