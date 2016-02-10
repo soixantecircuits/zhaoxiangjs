@@ -1,0 +1,137 @@
+FORMAT: 1A
+HOST: https://tonicdev.io/gabrielstuff/zhaoxiangjs/branches/master
+
+# ZhaoxiangJS
+
+ZhaoxiangJS gives you access to the DSLR currently connected.
+
+## Status API Root [/api/status]
+
+This resources returns the status of the `snapbox` and the `DSLR`.
+
+### Retrieve the status [GET]
+
++ Response 200 (application/json)
+        
+       + Body
+    
+              {"camera":"Canon EOS 1200D","isStreaming":false,"last_error":0,"camera_stuck":false}
+
+## Ask to shoot [/api/shoot] 
+
+This resources allows to ask for a shoot on the `DSLR`.
+
+### View a Shoot in default format [GET]
+
++ Response 200 (image/png)
+        
+       + Body
+    
+              Image
+
++ Response 404 (text/plain)
+        
+       + Body
+    
+              Camera not connected
+
+## Ask to shoot in a specific format [/api/shoot/{format}]
+
++ Parameters
+      + format: jpg (optional, string) - Type of the format : jpg or png
+
+### View a Shoot in specified format [GET]
+
++ Response 200 (image/{format})
+
+      + Headers
+    
+            Content-Length: data.length
+        
+      + Body
+    
+            the image
+
+## Prewiew API Root [/api/preview/{format}]
+
+This resources offer a preview of the image from the APN.
+
++ Parameters
+    + format: jpg (optional, string) - Type of the format : jpg or png
+
+### Retrieve the preview [GET]
+
++ Response 200 (image/{format})
+
+      + Headers
+    
+            Content-Length: data.length
+        
+      + Body
+    
+            the image
+
+## Get the last picture [/api/lastpicture]
+
+Retrieve the last picture taken from camera.
+
+### Get the last picture in default format [GET]
+
++ Response 200 (text/plain)
+      + Body
+      
+            image
+
+## Last picture in custom format [/api/lastpicture/{format}]
+
++ Parameters
+    + format: jpg (optional, string) - Type of the format : jpg or png
+
+### Retrieve the last picture taken from camera in specified format [GET]
+
++ Response 200 (image/{format})
+      + Body
+      
+            image
+
+# Settings Root [/api/settings]
+
+This resources gives access to the settings of the DSLR.
+A settings object's response has the following attributes:
+
++ main - An object
+
+## Retrieve the settings [GET]
+
++ Response 200 (application/json)
+        
+      + Body
+    
+            {"main":{"label":"Camera and Driver Configuration","type":"window","children":{"actions":{"label":"Camera Actions","type":"section","children":{"autofocusdrive":{"label":"Drive Canon DSLR Autofocus","type":"toggle","value":0},"cancelautofocus":{"label":"Cancel Canon DSLR Autofocus","type":"toggle","value":0},"eosremoterelease":{"label":"Canon EOS Remote Release","type":"choice","value":"None","choices":["None","Press Half","Press Full","Release Half","Release Full","Immediate","Press 1","Press 2","Press 3","Release 1","Release 2","Release 3"]},"eoszoom":{"label":"Canon EOS Zoom","type":"string","value":"0"},"eoszoomposition":{"label":"Canon EOS Zoom Position","type":"string","value":"0,0"},"manualfocusdrive":{"label":"Drive Canon DSLR Manual focus","type":"choice","value":"None","choices":["Near 1","Near 2","Near 3","None","Far 1","Far 2","Far 3"]},"syncdatetime":{"label":"Synchronize camera date and time with PC","type":"toggle","value":0},"uilock":{"label":"UI Lock","type":"toggle","value":2},"viewfinder":{"label":"Canon EOS Viewfinder","type":"toggle","value":2}}},"capturesettings":{"label":"Capture Settings","type":"section","children":{"aeb":{"label":"Auto Exposure Bracketing","type":"choice","value":"off","choices":["off","+/- 1/3","+/- 2/3","+/- 1","+/- 1 1/3","+/- 1 2/3","+/- 2"]},"aperture":{"label":"Aperture","type":"choice","value":"5","choices":["4.5","5","5.6","6.3","7.1","8","9","10","11","13","14","16","18","20","22","25","29"]},"autoexposuremode":{"label":"Canon Auto Exposure Mode","type":"choice","value":"Manual","choices":["P","TV","AV","Manual","Bulb","A_DEP","DEP","Custom","Lock","Green","Night Portrait","Sports","Portrait","Landscape","Closeup","Flash Off"]},"bracketmode":{"label":"Bracket Mode","type":"string","value":"0"},"drivemode":{"label":"Drive Mode","type":"choice","value":"Single","choices":["Single","Continuous","Timer 10 sec","Timer 2 sec","Unknown value 0007"]},"focusmode":{"label":"Focus Mode","type":"choice","value":"Manual","choices":["One Shot","AI Focus","AI Servo","Manual"]},"meteringmode":{"label":"Metering Mode","type":"choice","value":"Evaluative","choices":["Evaluative","Partial","Center-weighted average"]},"picturestyle":{"label":"Picture Style","type":"choice","value":"Auto","choices":["Auto","Standard","Portrait","Landscape","Neutral","Faithful","Monochrome","User defined 1","User defined 2","User defined 3"]},"shutterspeed":{"label":"Shutter Speed","type":"choice","value":"1/30","choices":["bulb","30","25","20","15","13","10","8","6","5","4","3.2","2.5","2","1.6","1.3","1","0.8","0.6","0.5","0.4","0.3","1/4","1/5","1/6","1/8","1/10","1/13","1/15","1/20","1/25","1/30","1/40","1/50","1/60","1/80","1/100","1/125","1/160","1/200","1/250","1/320","1/400","1/500","1/640","1/800","1/1000","1/1250","1/1600","1/2000","1/2500","1/3200","1/4000"]}}},"imgsettings":{"label":"Image Settings","type":"section","children":{"colorspace":{"label":"Color Space","type":"choice","value":"sRGB","choices":["sRGB","AdobeRGB"]},"imageformat":{"label":"Image Format","type":"choice","value":"Smaller JPEG (S2)","choices":["Large Fine JPEG","Large Normal JPEG","Medium Fine JPEG","Medium Normal JPEG","Small Fine JPEG (S1 Fine)","Small Normal JPEG (S1 Normal)","Smaller JPEG (S2)","Tiny JPEG (S3)","RAW + Large Fine JPEG","RAW"]},"imageformatsd":{"label":"Image Format SD","type":"choice","value":"Smaller JPEG (S2)","choices":["Large Fine JPEG","Large Normal JPEG","Medium Fine JPEG","Medium Normal JPEG","Small Fine JPEG (S1 Fine)","Small Normal JPEG (S1 Normal)","Smaller JPEG (S2)","Tiny JPEG (S3)","RAW + Large Fine JPEG","RAW"]},"iso":{"label":"ISO Speed","type":"choice","value":"3200","choices":["Auto","100","200","400","800","1600","3200","6400"]},"whitebalance":{"label":"WhiteBalance","type":"choice","value":"Auto","choices":["Auto","Daylight","Shadow","Cloudy","Tungsten","Fluorescent","Flash","Manual"]},"whitebalanceadjusta":{"label":"WhiteBalance Adjust A","type":"choice","value":"0","choices":["-9","-8","-7","-6","-5","-4","-3","-2","-1","0","1","2","3","4","5","6","7","8","9"]},"whitebalanceadjustb":{"label":"WhiteBalance Adjust B","type":"choice","value":"0","choices":["-9","-8","-7","-6","-5","-4","-3","-2","-1","0","1","2","3","4","5","6","7","8","9"]},"whitebalancexa":{"label":"WhiteBalance X A","type":"string","value":"0"},"whitebalancexb":{"label":"WhiteBalance X B","type":"string","value":"0"}}},"other":{"label":"Other PTP Device Properties","type":"section","children":{"5001":{"label":"Battery Level","type":"choice","value":"100","choices":["100","0","75","0","50"]},"d303":{"label":"PTP Property 0xd303","type":"string","value":"1"},"d402":{"label":"PTP Property 0xd402","type":"string","value":"Canon EOS 1200D"},"d406":{"label":"PTP Property 0xd406","type":"string","value":"Unknown Initiator"},"d407":{"label":"PTP Property 0xd407","type":"string","value":"1"}}},"settings":{"label":"Camera Settings","type":"section","children":{"artist":{"label":"Artist","type":"string","value":""},"autopoweroff":{"label":"Auto Power Off","type":"string","value":"0"},"capture":{"label":"Capture","type":"toggle","value":0},"capturetarget":{"label":"Capture Target","type":"choice","value":"Internal RAM","choices":["Internal RAM","Memory card"]},"copyright":{"label":"Copyright","type":"string","value":""},"customfuncex":{"label":"Custom Functions Ex","type":"string","value":"bc,4,1,2c,3,101,1,0,103,1,0,10f,1,0,2,2c,3,201,1,0,202,1,0,203,1,0,3,14,1,50e,1,0,4,38,4,701,1,0,704,1,0,70e,1,0,811,1,0,"},"datetime":{"label":"Camera Date and Time","type":"date","value":"2016-02-05T21:30:09.000Z"},"depthoffield":{"label":"Depth of Field","type":"string","value":"0"},"evfmode":{"label":"EVF Mode","type":"choice","value":"1","choices":["1","0"]},"focusinfo":{"label":"Focus Info","type":"string","value":"eosversion=0,size=5184x3456,size2=5184x3456,points={{0,743,117,181},{-839,393,172,129},{839,393,172,129},{-1394,0,172,129},{0,0,224,222},{1394,0,172,129},{-839,-393,172,129},{839,-393,172,129},{0,-743,117,181}},select={},unknown={ff010000ffff}"},"movierecordtarget":{"label":"Recording Destination","type":"choice","value":"None","choices":["None"]},"output":{"label":"Camera Output","type":"choice","value":"Off","choices":["TFT","PC","TFT + PC","Setting 4","Setting 5","Setting 6","Setting 7","Off"]},"ownername":{"label":"Owner Name","type":"string","value":""},"reviewtime":{"label":"Quick Review Time","type":"choice","value":"2 seconds","choices":["None","2 seconds","4 seconds","8 seconds","Hold"]}}},"status":{"label":"Camera Status Information","type":"section","children":{"availableshots":{"label":"Available Shots","type":"string","value":"218450"},"batterylevel":{"label":"Battery Level","type":"string","value":"100%"},"cameramodel":{"label":"Camera Model","type":"string","value":"Canon EOS 1200D"},"deviceversion":{"label":"Device Version","type":"string","value":"3-1.0.0"},"eosserialnumber":{"label":"Serial Number","type":"string","value":"083073133112"},"lensname":{"label":"Lens Name","type":"string","value":"EF-S18-55mm f/3.5-5.6 IS II"},"manufacturer":{"label":"Camera Manufacturer","type":"string","value":"Canon Inc."},"model":{"label":"Camera Model","type":"string","value":"2147484455"},"ptpversion":{"label":"PTP Version","type":"string","value":"256"},"serialnumber":{"label":"Serial Number","type":"string","value":"4e5486dc57094ab1a13f3888857bc0e3"},"shuttercounter":{"label":"Shutter Counter","type":"string","value":"4722"},"vendorextension":{"label":"Vendor Extension","type":"string","value":"None"}}}}}}
+
+## Update the settings [PUT]
+
+Update the settings by specifying an setting object 
+
++ Response 200 (application/json)
+
+## Retrieve a specific setting name [/api/settings/:name]
+
++ Parameters
+    + name: whatever (optional, string) - a property setting
+
+## Retrieve the setting name [GET]
+
++ Response 200 (application/json)
+
+       + Body
+     	 
+            ok
+
+## Update the setting name [PUT]
+
+Update the setting
+
++ Response 200 (application/json)
+       + Body
+        ok

@@ -345,7 +345,19 @@
       }
     }
   };
-
+  
+  /**
+   * @api {get} /api/status Request camera information
+   * @apiName GetCamera
+   * @apiGroup Camera
+   *
+   *
+   * @apiSuccess {String} camera Camera model currently connected.
+   * @apiSuccess {Boolean} isStreaming Streaming state of the camera.
+   * @apiSuccess {Number} last_error Latest known error thrown by the camera.
+   * @apiSuccess {Boolean} camera_stuck Hints about the state of camera.
+   */
+    
   app.get('/api/status', function(req, res) {
     var model = 'Not connected';
     if (camera)
