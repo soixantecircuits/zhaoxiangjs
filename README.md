@@ -29,6 +29,25 @@ open http://localhost:1337
 
 To see a preview stream, run mjpg_streamer, as mentioned [here](https://github.com/soixantecircuits/pyying)
 
+You can also run a magic commandline to see the stream as a webcam in your browser
+
+Install v4l2loopback
+
+```
+git clone https://github.com/umlaeute/v4l2loopback.git
+cd v4l2loopback
+sudo make
+sudo make install
+```
+
+And run
+
+```
+sudo modprobe v4l2loopback
+mjpg_streamer -i "/usr/local/lib/input_file.so -r -f /tmp/stream" -o     "/usr/local/lib/output_http.so -w /usr/local/www -p 8080"
+gst-launch-0.10 -v souphttpsrc location='http://localhost:8080/?action=stream' is-live=true ! multipartdemux ! decodebin2 ! v4l2sink device=/dev/video1
+```
+
 
 # Debug
 
