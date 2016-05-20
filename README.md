@@ -5,7 +5,7 @@ app to shoot pictures with a Canon EOS
 Before start, make sure you have installed [zeromq](http://zeromq.org/intro:get-the-software) and [gphoto](http://www.gphoto.org/).
 
 
-You'll need `node v0.12.7`. To make sure you have the correct version, use `nvm` ([installation instructions here](https://github.com/creationix/nvm)). Once you have it installed, type `nvm install 0.12.7`, then `nvm use 0.12.7` and finally `nvm use alias default` to make this version the default one.
+You'll need `node v0.10.37`. To make sure you have the correct version, use `nvm` ([installation instructions here](https://github.com/creationix/nvm)). Once you have it installed, type `nvm install 0.10.37`, then `nvm use 0.10.37` and finally `nvm use alias default` to make this version the default one.
 
 ```
 $ sudo apt-get install avahi-daemon libnss-mdns libavahi-compat-libdnssd-dev libgphoto2-2-dev curl
