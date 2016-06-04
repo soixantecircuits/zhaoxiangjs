@@ -208,6 +208,9 @@
           }
           else {return;}
         }
+        if (is_streaming) {
+           setTimeout(stream(), 0);
+        }
         console.log("loading " + camera.model + " settings");
         // TODO: uniform error handling
         return camera.getConfig(function(er, settings) {
