@@ -4,7 +4,7 @@
   "description": "app to shoot pictures with a Canon EOS",
   "scripts": {
     "start": "node app.js",
-    "postinstall": "cp -n config/config.example.json config/config.json"
+    "postinstall": "cp -n config/config.example.json config/config.json; echo \"!!!!!!\nDo not forget to run nvm use \n!!!!!!\";"
   },
   "dependencies": {
     "body-parser": "^1.11.0",
@@ -21,7 +21,8 @@
     "raspicam": "troyth/node-raspicam",
     "request": "^2.53.0",
     "segfault": "^0.3.0",
-    "socket.io-client": "1.3.3"
+    "socket.io-client": "1.3.3",
+    "spacebro-client": "0.1.0"
   },
   "devDependencies": {
     "socket.io": "^1.3.3"

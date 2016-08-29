@@ -11,6 +11,7 @@
   var bodyParser = require('body-parser');
   var mkdirp = require('mkdirp');
   var io = require('socket.io-client');
+  var spaceBro = require('spacebro-client');
   var has = require('deep-has');
   var diff = require('deep-diff').diff;
   var RaspiCam = require("raspicam");
@@ -41,7 +42,22 @@
     console.log("Select camera: " + argv.c);
   }
 
+  spaceBro.connect({
+    clientName: 'ponger',
+    channelName: 'starPort',
+    packers: [{ handler: function handler(args) {
+        return console.log(args.eventName, '=>', args.data);
+      } }],
+    unpackers: [{ handler: function handler(args) {
+        return console.log(args.eventName, '<=', args.data);
+      } }],
+    verbose: false
+  });
 
+  spaceBro.on('ping', function () {
+    console.log('get pinged');
+    spaceBro.emit('pong');
+  });
 
   console.log("isRaspicam :" + isRaspicam);
   if (isRaspicam){
@@ -234,7 +250,7 @@
     }
   });
 
-  utils.connectToService(config.servicelookup.name, function socketioInit(err, address, port) {
+  /*utils.connectToService(config.servicelookup.name, function socketioInit(err, address, port) {
     var socket = io('http://' + address + ':' + port);
     socket
       .on('connect', function() {
@@ -298,17 +314,16 @@
             console.log("photo image captured with filename: " + data );
             lastPicture = data;
           });
-          /*
-          var camera = new RaspiCam(raspicam_options);
-          camera.on("read", function( err, timestamp, filename ){
-            console.log("photo image captured with filename: " + filename );
-            lastPicture = filename;
-          });
-          camera.start();
-          */
+          
+          //var camera = new RaspiCam(raspicam_options);
+          //camera.on("read", function( err, timestamp, filename ){
+          //  console.log("photo image captured with filename: " + filename );
+          //  lastPicture = filename;
+          //});
+          //camera.start();
         }
       });
-  });
+  });*/
 
 
   app = express();
