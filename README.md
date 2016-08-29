@@ -4,13 +4,19 @@ app to shoot pictures with a Canon EOS
 
 Before start, make sure you have installed [zeromq](http://zeromq.org/intro:get-the-software) and [gphoto](http://www.gphoto.org/).
 
+You'll need `node v0.10.46`. To make sure you have the correct version, use `nvm` ([installation instructions here](https://github.com/creationix/nvm)). Once you have it installed, type `nvm install 0.10.37`, then `nvm use 0.10.37` and finally `nvm use alias default` to make this version the default one.
 
-You'll need `node v0.10.37`. To make sure you have the correct version, use `nvm` ([installation instructions here](https://github.com/creationix/nvm)). Once you have it installed, type `nvm install 0.10.37`, then `nvm use 0.10.37` and finally `nvm use alias default` to make this version the default one.
+!Warning!
+Running on Mac OS 10.9+ you might need to link to your local folder. This is related to the related issue https://github.com/lwille/node-gphoto2/issues/57 
+
+```
+sudo ln -s /usr/local /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/usr/local
+```
 
 ```
 $ sudo apt-get install avahi-daemon libnss-mdns libavahi-compat-libdnssd-dev libgphoto2-2-dev curl
 npm i
-cp config/config.example.json config/config.json
+cp -n config/config.example.json config/config.json
 ```
 Then fill it with your informations, and when it's done:
 ```
