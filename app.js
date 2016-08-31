@@ -290,7 +290,7 @@
             console.log('emit')
             spaceBro.emit('image-saved', {
               // path to download file
-              src: path.join('http://' + ip.address() + ':' + webport, path.basename(data) + '.jpg'),
+              src: 'http://' + ip.address() + ':' + webport + '/' + path.basename(data) + '.jpg',
               // number of the camera in the 3-6-flip
               number: id_computer,
               // unique id of the shooting
