@@ -146,9 +146,9 @@
       // process.exit(-1)
     }
     else if (last_error == -1) {
-      console.error('Exiting because -1 error causes an error of retrieving the last picture at next shoot')
+      //console.error('Exiting because -1 error causes an error of retrieving the last picture at next shoot')
     }
-    slackit(er)
+    //slackit(er)
   // setTimeout(function(){process.exit(-1);},1000)
   }
 
@@ -277,9 +277,11 @@
       if (!camera) {
         on_error(er)
       } else {
+        var filename = 'snap-' + snap_id + '-' + id_computer + '-XXXXXXX'
         return camera.takePicture({
           download: true,
-          targetPath: '/tmp/snaps/voldenuit' + snap_id + '-' + id_computer + '.jpg'
+          //targetPath: '/tmp/snaps/voldenuit' + snap_id + '-' + id_computer + '.jpg'
+          targetPath: path.join('/tmp/snaps/' + filename)
         }, function (er, data) {
           if (er) {
             on_error(er)
@@ -288,7 +290,7 @@
             console.log('emit')
             spaceBro.emit('image-saved', {
               // path to download file
-              src: 'http://' + ip.address() + ':' + webport + '/voldenuit' + snap_id + '-' + id_computer + '.jpg',
+              src: path.join('http://' + ip.address() + ':' + webport, path.basename(data)),
               // number of the camera in the 3-6-flip
               number: id_computer,
               // unique id of the shooting
