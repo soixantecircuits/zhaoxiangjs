@@ -23,7 +23,7 @@
 
   var Segfault = require('segfault')
 
-  Segfault.registerHandler('errors.txt')
+  Segfault.registerHandler('/tmp/errors.txt')
 
   var app, camera, gphoto, id, logRequests, name, preview_listeners, requests, _ref
   // TODO: recognize options, -f is for no camera
@@ -37,9 +37,10 @@
   var isRaspicam = config.camera == 'raspicam'
 
   console.log(argv)
-  if (argv.c != undefined) {
-    id_camera = argv.c
-    console.log('Select camera: ' + argv.c)
+  var arg = argv._[0]
+  if (arg >= 0) {
+    id_camera = arg
+    console.log('Select camera: ' + id_camera)
   }
 
   console.log('isRaspicam :' + isRaspicam)
@@ -122,7 +123,8 @@
   // TODO: do not use try/catch?
   try {
     // TODO: USE a config file for the hostname
-    id_computer = host.match(/voldenuit(.*)/)[1]
+    id_computer = parseInt(host.match(/snapbox(.*)/)[1])
+    console.log("Camera number sent on spacebro: " + id_computer)
   } catch (err) {
     // console.log(err)
     console.log('Apparently this computer is not in the team, check your hostname.')
@@ -192,6 +194,7 @@
       if (config.camera_usb_buses == undefined) {
         if (index == id_camera) {
           camera = onecamera
+          console.log('Selected camera: ' + id_camera)
         } else {
           return
         }
@@ -280,7 +283,6 @@
         var filename = 'snap-' + snap_id + '-' + id_computer + '-XXXXXXX'
         return camera.takePicture({
           download: true,
-          //targetPath: '/tmp/snaps/voldenuit' + snap_id + '-' + id_computer + '.jpg'
           targetPath: path.join('/tmp/snaps/' + filename)
         }, function (er, data) {
           if (er) {
