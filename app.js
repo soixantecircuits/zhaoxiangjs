@@ -290,7 +290,7 @@
             console.log('emit')
             spaceBro.emit('image-saved', {
               // path to download file
-              src: path.join('http://' + ip.address() + ':' + webport, path.basename(data)),
+              src: path.join('http://' + ip.address() + ':' + webport, path.basename(data) + '.jpg'),
               // number of the camera in the 3-6-flip
               number: id_computer,
               // unique id of the shooting
@@ -341,6 +341,18 @@
 
   app.get('/', function (req, res) {
     return res.render('index.html')
+  })
+
+  app.get(/(.*)\.jpg$/, function(req,res){
+    //res.sendFile(req.params[0], {root: '/tmp/snaps'});
+    fs.readFile(path.join('/tmp/snaps', req.params[0]), function (er, data) {
+      if (er) {
+        return res.send(404, er)
+      } else {
+        res.header('Content-Type', 'image/jpg')
+        return res.send(data)
+      }
+    })
   })
 
   logRequests = function () {
