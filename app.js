@@ -36,15 +36,14 @@
   var id_camera = 0
   var isRaspicam = config.camera == 'raspicam'
 
-  console.log(argv)
   var arg = argv._[0]
   if (arg >= 0) {
     id_camera = arg
     console.log('Select camera: ' + id_camera)
   }
 
-  console.log('isRaspicam :' + isRaspicam)
   if (isRaspicam) {
+    console.log('Started in raspicam mode')
     var settings_path = './picamera-settings.json'
     var settings = require(settings_path)
 
@@ -127,7 +126,7 @@
     console.log("Camera number sent on spacebro: " + id_computer)
   } catch (err) {
     // console.log(err)
-    console.log('Apparently this computer is not in the team, check your hostname.')
+    console.log('Camera number sent on spacebro could not be guessed from the hostname ' + host)
   }
 
   mkdirp('/tmp/stream', function (err) {
@@ -189,8 +188,8 @@
       process.exit(-1)
     }
     cameras.forEach(function (onecamera, index) {
-      console.log('Camera: ' + onecamera.model)
-      console.log('port: ' + onecamera.port)
+      console.log('Camera found! : ' + onecamera.model)
+      console.log('on port: ' + onecamera.port)
       if (config.camera_usb_buses == undefined) {
         if (index == id_camera) {
           camera = onecamera
@@ -681,5 +680,5 @@
   })
 
   app.listen(process.env.PORT || webport, ip.address())
-  console.log('http://'+ip.address()+':'+webport)
+  console.log('Serving on http://'+ip.address()+':'+webport)
 }).call(this)
