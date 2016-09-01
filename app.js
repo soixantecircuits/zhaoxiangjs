@@ -17,7 +17,6 @@
   var RaspiCam = require('raspicam')
   var osc = require('node-osc')
   // var client = new osc.Client('127.0.0.1', 3333); 
-  var webport = 1337
   var settings = require('./settings/settings.json')
   var utils = require('./utils')
   var exec = require('child_process').exec
@@ -186,6 +185,9 @@
   }
   if (settings.cameraNumber === 'undefined') {
       settings.cameraNumber = -1
+  }
+  if (!settings.webport) {
+      settings.webport = 1337
   }
 
   /* old
@@ -410,7 +412,7 @@
             console.log('emit')
             spaceBro.emit('image-saved', {
               // path to download file
-              src: 'http://' + ip.address() + ':' + webport + '/' + path.basename(data) + '.jpg',
+              src: 'http://' + ip.address() + ':' + settings.webport + '/' + path.basename(data) + '.jpg',
               // number of the camera in the 3-6-flip
               number: settings.cameraNumber,
               // unique id of the shooting
@@ -807,6 +809,6 @@
     console.error('warning ' + er.stack)
   })
 
-  app.listen(process.env.PORT || webport, ip.address())
-  console.log('Serving on http://'+ip.address()+':'+webport)
+  app.listen(process.env.PORT || settings.webport, ip.address())
+  console.log('Serving on http://'+ip.address()+':'+settings.webport)
 }).call(this)

@@ -3,6 +3,7 @@
     "name": "remote"
   },
   "camera_usb_buses": [1, 3],
+  "webport": 1337,
   "slack": { 
     "token": "XXXXX/XXXX/XXX", 
     "channel": "#general",
