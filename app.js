@@ -20,6 +20,7 @@
   var webport = 1337
   var config = require('./config/config.json')
   var utils = require('./utils')
+  var exec = require('child_process').exec
 
   var Segfault = require('segfault')
 
@@ -123,6 +124,7 @@
   try {
     // TODO: USE a config file for the hostname
     id_computer = parseInt(host.match(/snapbox(.*)/)[1])
+    id_computer += id_camera
     console.log("Camera number sent on spacebro: " + id_computer)
   } catch (err) {
     // console.log(err)
@@ -182,6 +184,27 @@
   }
   loadSettings()
 
+  var getKernel = function(port, callback) {
+    // udevadm info --name /dev/bus/usb/001/009 --attribute-walk | grep KERNEL
+    port = port.replace(/,|:/g , '/')
+    exec('udevadm info --name /dev/bus/'+ port +  ' --attribute-walk | grep KERNEL', function(error, stdout, stderr) {
+      if (error) {
+        typeof callback === 'function' && callback(error, null)
+        return
+      }
+      //console.log('udevadm: ', stdout)
+      
+      var re = /KERNEL=="(\d-\d\.?\d?)"/i
+      var match = stdout.match(re)
+      //console.log("match: " + match)
+      if (match && match[1]) {
+        typeof callback === 'function' && callback(null, match[1])
+      } else {
+        typeof callback === 'function' && callback("KERNELS not found", null)
+      }
+    })
+  }
+
   gphoto.list(function (cameras) {
     if (cameras.length == 0 && !argv.f) {
       console.log('Exit - no camera found, sorry. :(')
@@ -190,22 +213,39 @@
     cameras.forEach(function (onecamera, index) {
       console.log('Camera found! : ' + onecamera.model)
       console.log('on port: ' + onecamera.port)
-      if (config.camera_usb_buses == undefined) {
-        if (index == id_camera) {
-          camera = onecamera
-          console.log('Selected camera: ' + id_camera)
-        } else {
-          return
-        }
-      } else {
+      if (config.kernel) {
+        getKernel(onecamera.port, function (err, kernel) {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          //console.log("kernel: " + kernel)
+          if (config.kernel == kernel) {
+            camera = onecamera
+            console.log('Selected camera with kernel : ' + config.kernel)
+            console.log('on port: ' + onecamera.port)
+          }
+        })
+      }
+      else if (config.camera_usb_buses) {
         var port = config.camera_usb_buses[id_camera]
         if (onecamera.port.charAt(6) == port) {
           camera = onecamera
         } else {return;}
       }
+      else {
+        if (index == id_camera) {
+          camera = onecamera
+          console.log('Selected camera: ' + id_camera)
+          console.log('on port: ' + onecamera.port)
+        } else {
+          return
+        }
+      }
       if (is_streaming) {
         setTimeout(stream(), 0)
       }
+      /*
       console.log('loading ' + camera.model + ' settings')
       // TODO: uniform error handling
       return camera.getConfig(function (er, settings) {
@@ -221,12 +261,14 @@
         }
         return console.log(settings)
       })
+      */
     })
-
+    /*
     if (camera == undefined && !argv.f) {
       console.log('Could not find a camera matching with you config file')
       process.exit(-1)
     }
+    */
   })
 
   spaceBro.connect('spacebro.space', 3333,{

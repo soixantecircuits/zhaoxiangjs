@@ -16,7 +16,6 @@ sudo ln -s /usr/local /Applications/Xcode.app/Contents/Developer/Platforms/MacOS
 ```
 $ sudo apt-get install avahi-daemon libnss-mdns libavahi-compat-libdnssd-dev libgphoto2-2-dev curl
 npm i
-cp -n config/config.example.json config/config.json
 ```
 Then fill it with your informations, and when it's done:
 ```
@@ -81,3 +80,16 @@ If something wrong with your camera, try some basic commands with the gphoto2 ut
 
 `gphoto2 --auto-detect --list-config`
 `gphoto2 --auto-detect --capture-image-and-download`
+
+# Select camera
+
+To select a camera by it's physical usb port, add the KERNEL to your `config.json`, ie.
+
+```
+  "kernel": "1-1.3",
+```
+
+To know the kernel of the physical usb port, note the usb port of the camera, here we use 001,009, and then run
+```
+udevadm info --name /dev/bus/usb/001/009 --attribute-walk | grep KERNEL
+```
