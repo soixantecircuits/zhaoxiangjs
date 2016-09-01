@@ -4,7 +4,7 @@
   "description": "app to shoot pictures with a Canon EOS",
   "scripts": {
     "start": "node app.js",
-    "postinstall": "cp -n config/config.example.json config/config.json; echo \"!!!!!!\nDo not forget to run nvm use \n!!!!!!\";"
+    "postinstall": "cp -n settings/settings.example.json settings/settings.json; echo \"!!!!!!\nDo not forget to run nvm use \n!!!!!!\";"
   },
   "dependencies": {
     "body-parser": "^1.11.0",
