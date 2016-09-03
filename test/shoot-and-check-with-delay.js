@@ -23,10 +23,10 @@ spaceBro.on('image-saved', function(data){
 })
 
 setTimeout(function(){
-  spaceBro.emit('shoot', uniqid())
+  spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 0} )
   console.log('emit shoot')
 }, 300)
 setInterval(function(){
-  spaceBro.emit('shoot', uniqid())
+  spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 200} )
   console.log('emit shoot')
 }, 20000)
