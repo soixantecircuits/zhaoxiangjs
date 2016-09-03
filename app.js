@@ -21,6 +21,9 @@
   var utils = require('./utils')
   var exec = require('child_process').exec
   var program = require('commander')
+  var schedule = require('node-schedule')
+  var moment = require('moment')
+  var NanoTimer = require('nanotimer')
 
   var Segfault = require('segfault')
 
@@ -443,7 +446,36 @@
   }
 
   spaceBro.on('shoot', function (data) {
-    if (data.frameDelay && data.frameDelay > 0) {
+    if (data.atTime) {
+      var date = moment(data.atTime)
+      if (date < moment()) {
+        shoot(data.albumId)
+      } else {
+        /*
+        schedule.scheduleJob(date.toDate(), function(){
+          shoot(data.albumId)
+          var datelog = moment()
+          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
+        })
+        */
+
+        /*
+        setTimeout( function(){
+          shoot(data.albumId)
+          var datelog = moment()
+          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
+        }, date - moment() )
+        */
+        var timer = new NanoTimer();
+        var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
+        timer.setTimeout(function() {
+          var datelog = moment()
+          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
+          shoot(data.albumId)
+        }, [timer], delay + 'm')
+      }
+    }
+    else if (data.frameDelay && data.frameDelay > 0) {
       setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
     } else if (data.frameDelay == 0) {
       shoot(data.albumId)
