@@ -349,7 +349,7 @@
   }
   connectToCamera()
 
-  spaceBro.connect('spacebro.space', 3333,{
+  spaceBro.connect('yoga.local', 8888,{
     clientName: os.hostname(),
     channelName: 'zhaoxiangjs',
     packers: [{ handler: function handler (args) {
@@ -394,7 +394,7 @@
       }
     }
   })
-  spaceBro.on('shoot', function (snap_id) {
+  var shoot = function(snap_id){
     if (!isRaspicam) {
       if (!camera) {
         connectToCamera()
@@ -438,6 +438,17 @@
     })
     camera.start()
     */
+    }
+
+  }
+
+  spaceBro.on('shoot', function (data) {
+    if (data.frameDelay && data.frameDelay > 0){
+      setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
+    } else if (data.albumId == 0){
+      shoot(data.albumId)
+    } else {
+      shoot(data)
     }
   })
 
