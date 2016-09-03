@@ -443,9 +443,11 @@
   }
 
   spaceBro.on('shoot', function (data) {
-    if (data.frameDelay && data.frameDelay > 0){
+    if (data.frameDelay && data.frameDelay > 0) {
       setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
-    } else if (data.albumId == 0){
+    } else if (data.frameDelay == 0) {
+      shoot(data.albumId)
+    } else if (data.albumId) {
       shoot(data.albumId)
     } else {
       shoot(data)
