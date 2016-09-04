@@ -17,9 +17,12 @@
   var RaspiCam = require('raspicam')
   var osc = require('node-osc')
   // var client = new osc.Client('127.0.0.1', 3333); 
-  var webport = 1337
-  var config = require('./config/config.json')
+  var settings = require('./settings/settings.json')
   var utils = require('./utils')
+  var exec = require('child_process').exec
+  var program = require('commander')
+  var moment = require('moment')
+  var NanoTimer = require('nanotimer')
 
   var Segfault = require('segfault')
 
@@ -34,7 +37,23 @@
   var last_error = 0
   var id_computer = 0
   var id_camera = 0
-  var isRaspicam = config.camera == 'raspicam'
+  var isRaspicam = settings.camera == 'raspicam'
+
+  // get command line arguments
+ if (process.argv.length > 1) {
+    program
+      // TODO: .version('0.0.1')
+    .option('-s, --settings <path>', 'Set settings file path')
+    .parse(process.argv)
+    try {
+      if (program.settings){
+        var settings = require(program.settings)
+      }
+    } catch (e) {
+      console.warn('Unable to load settings from cli', e)
+    }
+ }
+
 
   var arg = argv._[0]
   if (arg >= 0) {
@@ -89,7 +108,6 @@
 
   process.title = 'zhaoxiangjs'
 
-  gphoto = new GPhoto.GPhoto2()
 
   requests = {}
 
@@ -118,16 +136,76 @@
 
     camera.start()
   */
+
+  // init numbering
+  if (settings.cameraNumber && settings.cameraNumber.indexOf('$hostname') !== -1 ) {
+
+    // get offset  in the form  $hostname+1, $hostname+10
+    var offset = 0
+    
+    var re = /\+(\d+)$/i
+    var match = settings.cameraNumber.match(re)
+
+    if (match && match[1]) {
+      offset = parseInt(match[1])
+    }
+
+    // get offset  in the form  $hostname-1, $hostnamer-10
+    re = /-(\d+)$/i
+    match = settings.cameraNumber.match(re)
+
+    if (match && match[1]) {
+      offset = -parseInt(match[1])
+    }
+
+
+    // get coeff  in the form  $hostname+1, $hostname+10
+    var coeff = 1
+    
+    re = /^(\d+)/i
+    match = settings.cameraNumber.match(re)
+
+    if (match && match[1]) {
+      coeff = parseInt(match[1])
+    }
+
+
+
+    // get hostname number in the form myname-01, myname1, ...
+    var hostname = os.hostname()
+    re = /(\d+)$/i
+    match = hostname.match(re)
+
+    if (match && match[1]) {
+      settings.cameraNumber = parseInt(match[1])
+    } else {
+      settings.cameraNumber = 1
+    }
+
+    settings.cameraNumber = coeff * settings.cameraNumber + offset
+    console.log("camera number: " + settings.cameraNumber)
+  }
+  if (settings.cameraNumber === 'undefined') {
+      settings.cameraNumber = -1
+  }
+  if (!settings.webport) {
+      settings.webport = 1337
+  }
+
+  /* old
+
   var host = os.hostname()
   // TODO: do not use try/catch?
   try {
     // TODO: USE a config file for the hostname
     id_computer = parseInt(host.match(/snapbox(.*)/)[1])
+    id_computer += id_camera
     console.log("Camera number sent on spacebro: " + id_computer)
   } catch (err) {
     // console.log(err)
     console.log('Camera number sent on spacebro could not be guessed from the hostname ' + host)
   }
+  */
 
   mkdirp('/tmp/stream', function (err) {
     if (err) console.error(err)
@@ -182,54 +260,98 @@
   }
   loadSettings()
 
-  gphoto.list(function (cameras) {
-    if (cameras.length == 0 && !argv.f) {
-      console.log('Exit - no camera found, sorry. :(')
-      process.exit(-1)
-    }
-    cameras.forEach(function (onecamera, index) {
-      console.log('Camera found! : ' + onecamera.model)
-      console.log('on port: ' + onecamera.port)
-      if (config.camera_usb_buses == undefined) {
-        if (index == id_camera) {
-          camera = onecamera
-          console.log('Selected camera: ' + id_camera)
-        } else {
-          return
-        }
+  var getKernel = function(port, callback) {
+    // udevadm info --name /dev/bus/usb/001/009 --attribute-walk | grep KERNEL
+    port = port.replace(/,|:/g , '/')
+    exec('udevadm info --name /dev/bus/'+ port +  ' --attribute-walk | grep KERNEL', function(error, stdout, stderr) {
+      if (error) {
+        typeof callback === 'function' && callback(error, null)
+        return
+      }
+      //console.log('udevadm: ', stdout)
+      
+      var re = /KERNEL=="(\d-\d\.?\d?)"/i
+      var match = stdout.match(re)
+      //console.log("match: " + match)
+      if (match && match[1]) {
+        typeof callback === 'function' && callback(null, match[1])
       } else {
-        var port = config.camera_usb_buses[id_camera]
-        if (onecamera.port.charAt(6) == port) {
-          camera = onecamera
-        } else {return;}
+        typeof callback === 'function' && callback("KERNELS not found", null)
       }
-      if (is_streaming) {
-        setTimeout(stream(), 0)
-      }
-      console.log('loading ' + camera.model + ' settings')
-      // TODO: uniform error handling
-      return camera.getConfig(function (er, settings) {
-        if (er) {
-          last_error = er
-          console.log(er)
-          console.error({
-            camera_error: er
-          })
-
-          utils.restart_usb()
-        // process.exit(-1)
-        }
-        return console.log(settings)
-      })
     })
+  }
+  
+  var connectToCamera = function () {
+    gphoto = new GPhoto.GPhoto2()
+    gphoto.list(function (cameras) {
+      if (cameras.length == 0 && !argv.f) {
+        console.log('Exit - no camera found, sorry. :(')
+        process.exit(-1)
+      }
+      cameras.forEach(function (onecamera, index) {
+        console.log('Camera found! : ' + onecamera.model)
+        console.log('on port: ' + onecamera.port)
+        if (settings.kernel) {
+          getKernel(onecamera.port, function (err, kernel) {
+            if (err) {
+              console.log(err);
+              return;
+            }
+            //console.log("kernel: " + kernel)
+            if (settings.kernel == kernel) {
+              camera = onecamera
+              console.log('Selected camera with kernel : ' + settings.kernel)
+              console.log('on port: ' + onecamera.port)
+            }
+          })
+        }
+        else if (settings.camera_usb_buses) {
+          var port = settings.camera_usb_buses[id_camera]
+          if (onecamera.port.charAt(6) == port) {
+            camera = onecamera
+          } else {return;}
+        }
+        else {
+          if (index == id_camera) {
+            camera = onecamera
+            console.log('Selected camera: ' + id_camera)
+            console.log('on port: ' + onecamera.port)
+          } else {
+            return
+          }
+        }
+        if (is_streaming) {
+          setTimeout(stream(), 0)
+        }
+        /*
+        console.log('loading ' + camera.model + ' settings')
+        // TODO: uniform error handling
+        return camera.getConfig(function (er, settings) {
+          if (er) {
+            last_error = er
+            console.log(er)
+            console.error({
+              camera_error: er
+            })
 
-    if (camera == undefined && !argv.f) {
-      console.log('Could not find a camera matching with you config file')
-      process.exit(-1)
-    }
-  })
+            utils.restart_usb()
+          // process.exit(-1)
+          }
+          return console.log(settings)
+        })
+        */
+      })
+      /*
+      if (camera == undefined && !argv.f) {
+        console.log('Could not find a camera matching with you settings file')
+        process.exit(-1)
+      }
+      */
+    })
+  }
+  connectToCamera()
 
-  spaceBro.connect('spacebro.space', 3333,{
+  spaceBro.connect('yoga.local', 8888,{
     clientName: os.hostname(),
     channelName: 'zhaoxiangjs',
     packers: [{ handler: function handler (args) {
@@ -274,12 +396,13 @@
       }
     }
   })
-  spaceBro.on('shoot', function (snap_id) {
+  var shoot = function(snap_id, late){
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         on_error(er)
       } else {
-        var filename = 'snap-' + snap_id + '-' + id_computer + '-XXXXXXX'
+        var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + late + '-XXXXXXX'
         return camera.takePicture({
           download: true,
           targetPath: path.join('/tmp/snaps/' + filename)
@@ -291,11 +414,12 @@
             console.log('emit')
             spaceBro.emit('image-saved', {
               // path to download file
-              src: 'http://' + ip.address() + ':' + webport + '/' + path.basename(data) + '.jpg',
+              src: 'http://' + ip.address() + ':' + settings.webport + '/' + path.basename(data) + '.jpg',
               // number of the camera in the 3-6-flip
-              number: id_computer,
+              number: settings.cameraNumber,
               // unique id of the shooting
-              album_name: snap_id
+              album_name: snap_id,
+              late: late
             })
 
           // console.log('lastPicture: ' + lastPicture)
@@ -303,7 +427,7 @@
         })
       }
     } else {
-      raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + id_computer + '-XXXXXXX.jpg'
+      raspicam_options.output = '/tmp/snaps/snap-' + snap_id + '-' + settings.cameraNumber + '-XXXXXXX.jpg'
       // client.send('/picamera-osc/shoot', raspicam_options.output)
       client.invoke('shoot', raspicam_options.output, function (error, data, more) {
         console.log('photo image captured with filename: ' + data)
@@ -317,6 +441,32 @@
     })
     camera.start()
     */
+    }
+
+  }
+
+  spaceBro.on('shoot', function (data) {
+    if (data.atTime) {
+      var date = moment(data.atTime)
+      if (date < moment()) {
+        shoot(data.albumId)
+      } else {
+        var timer = new NanoTimer();
+        var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
+        timer.setTimeout(function() {
+          var datelog = moment()
+          shoot(data.albumId, datelog-date)
+        }, [timer], delay + 'm')
+      }
+    }
+    else if (data.frameDelay && data.frameDelay > 0) {
+      setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
+    } else if (data.frameDelay == 0) {
+      shoot(data.albumId)
+    } else if (data.albumId) {
+      shoot(data.albumId)
+    } else {
+      shoot(data)
     }
   })
 
@@ -390,6 +540,7 @@
   app.get('/api/shoot/', function (req, res) {
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
         return camera.takePicture({
@@ -428,6 +579,7 @@
   app.get('/api/shoot/:format', function (req, res) {
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
         return camera.takePicture({
@@ -488,6 +640,7 @@
   app.get('/api/settings/:name', function (req, res) {
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
         camera.getConfig(function (er, settings) {
@@ -509,6 +662,7 @@
   app.put('/api/settings/:name', function (req, res) {
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
         return camera.setConfigValue(req.params.name, req.body.newValue, function (er) {
@@ -533,6 +687,7 @@
   app.get('/api/settings', function (req, res) {
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
         return camera.getConfig(function (er, settings) {
@@ -547,6 +702,7 @@
   app.put('/api/settings', function (req, res) {
     if (!isRaspicam) {
       if (!camera) {
+        connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
         var _settings = JSON.parse(req.body.settings)
@@ -622,6 +778,7 @@
   app.get('/api/stream/stop', function (req, res) {
     is_streaming = false
     if (!camera) {
+        connectToCamera()
       return res.send(404, 'Camera not connected')
     } else {
       return res.send(200, 'Stream stopped')
@@ -630,6 +787,7 @@
 
   app.get('/api/stream/start', function (req, res) {
     if (!camera) {
+        connectToCamera()
       return res.send(404, 'Camera not connected')
     } else if (!is_streaming) {
       is_streaming = true
@@ -643,6 +801,7 @@
 
   app.get('/api/preview/:format', function (req, res) {
     if (!camera) {
+        connectToCamera()
       return res.send(404, 'Camera not connected')
     } else {
       preview_listeners.push(res)
@@ -679,6 +838,6 @@
     console.error('warning ' + er.stack)
   })
 
-  app.listen(process.env.PORT || webport, ip.address())
-  console.log('Serving on http://'+ip.address()+':'+webport)
+  app.listen(process.env.PORT || settings.webport, ip.address())
+  console.log('Serving on http://'+ip.address()+':'+settings.webport)
 }).call(this)
