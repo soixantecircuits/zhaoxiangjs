@@ -21,7 +21,6 @@
   var utils = require('./utils')
   var exec = require('child_process').exec
   var program = require('commander')
-  var schedule = require('node-schedule')
   var moment = require('moment')
   var NanoTimer = require('nanotimer')
 
@@ -397,13 +396,13 @@
       }
     }
   })
-  var shoot = function(snap_id){
+  var shoot = function(snap_id, late){
     if (!isRaspicam) {
       if (!camera) {
         connectToCamera()
         on_error(er)
       } else {
-        var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + '-XXXXXXX'
+        var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + late + '-XXXXXXX'
         return camera.takePicture({
           download: true,
           targetPath: path.join('/tmp/snaps/' + filename)
@@ -419,7 +418,8 @@
               // number of the camera in the 3-6-flip
               number: settings.cameraNumber,
               // unique id of the shooting
-              album_name: snap_id
+              album_name: snap_id,
+              late: late
             })
 
           // console.log('lastPicture: ' + lastPicture)
@@ -451,27 +451,11 @@
       if (date < moment()) {
         shoot(data.albumId)
       } else {
-        /*
-        schedule.scheduleJob(date.toDate(), function(){
-          shoot(data.albumId)
-          var datelog = moment()
-          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-        })
-        */
-
-        /*
-        setTimeout( function(){
-          shoot(data.albumId)
-          var datelog = moment()
-          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-        }, date - moment() )
-        */
         var timer = new NanoTimer();
         var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
         timer.setTimeout(function() {
           var datelog = moment()
-          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-          shoot(data.albumId)
+          shoot(data.albumId, datelog-date)
         }, [timer], delay + 'm')
       }
     }
