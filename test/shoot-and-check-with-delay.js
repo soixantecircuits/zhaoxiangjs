@@ -3,6 +3,7 @@
 var spaceBro = require('spacebro-client')
 var uniqid = require('uniqid')
 var os = require('os')
+var moment = require('moment')
 
 //spaceBro.connect('spacebro.space', 3333, {
 spaceBro.connect('yoga.local', 8888, {
@@ -22,11 +23,16 @@ spaceBro.on('image-saved', function(data){
   console.log(data)
 })
 
+
 setTimeout(function(){
-  spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 0} )
+  var date = moment()
+  date = date.add(2000 - date.milliseconds())
+  spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 0, atTime:date.format('YYYY-MM-DDTHH:mm:ss.SSSZ') } )
   console.log('emit shoot')
 }, 300)
 setInterval(function(){
-  spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 200} )
+  var date = moment()
+  date = date.add(2000 - date.milliseconds())
+  spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 0, atTime:date.format('YYYY-MM-DDTHH:mm:ss.SSSZ') } )
   console.log('emit shoot')
-}, 20000)
+}, 5000)
