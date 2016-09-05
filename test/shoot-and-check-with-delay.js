@@ -26,13 +26,13 @@ spaceBro.on('image-saved', function(data){
 
 setTimeout(function(){
   var date = moment()
-  date = date.add(2000 - date.milliseconds())
+  date = date.add(2000)
   spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 0, atTime:date.format('YYYY-MM-DDTHH:mm:ss.SSSZ') } )
   console.log('emit shoot')
 }, 300)
 setInterval(function(){
   var date = moment()
-  date = date.add(2000 - date.milliseconds())
+  date = date.add(2000)
   spaceBro.emit('shoot', {albumId:uniqid(), frameDelay: 0, atTime:date.format('YYYY-MM-DDTHH:mm:ss.SSSZ') } )
   console.log('emit shoot')
 }, 5000)
