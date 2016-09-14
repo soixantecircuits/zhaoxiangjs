@@ -35,10 +35,13 @@
   var lastPicture
   var is_streaming = false
   var stream_folder = '/tmp/stream/'
+  var preview_folder = '/tmp/preview/'
   var last_error = 0
   var id_computer = 0
   var id_camera = 0
   var isRaspicam = settings.camera == 'raspicam'
+  var host = ip.address() 
+  //var host = os.hostname() + '.local'
 
   // get command line arguments
  if (process.argv.length > 1) {
@@ -208,10 +211,13 @@
   }
   */
 
-  mkdirp('/tmp/stream', function (err) {
+  mkdirp(stream_folder, function (err) {
     if (err) console.error(err)
   })
   mkdirp('/tmp/snaps', function (err) {
+    if (err) console.error(err)
+  })
+  mkdirp(preview_folder, function (err) {
     if (err) console.error(err)
   })
 
@@ -220,13 +226,14 @@
   var on_error = function (er) {
     // TODO: socketio error retrieve, to see it in the logs of nuwa
     last_error = er
-    console.error('error code: ' + er)
+    console.log('error code: ' + er)
     if (last_error == -7) {
       // console.error("Can't connect to camera, exiting")
       // process.exit(-1)
     }
     else if (last_error == -1) {
       //console.error('Exiting because -1 error causes an error of retrieving the last picture at next shoot')
+      process.exit(-1)
     }
     //slackit(er)
   // setTimeout(function(){process.exit(-1);},1000)
@@ -352,15 +359,17 @@
   }
   connectToCamera()
 
-  spaceBro.connect('yoga.local', 8888,{
+  spaceBro.connect('10.60.60.139', 8888,{
     clientName: os.hostname(),
     channelName: 'zhaoxiangjs',
+    /*
     packers: [{ handler: function handler (args) {
         return console.log(args.eventName, '=>', args.data)
     } }],
     unpackers: [{ handler: function handler (args) {
         return console.log(args.eventName, '<=', args.data)
     } }],
+    */
     verbose: false,
     sendBack: false
   })
@@ -397,13 +406,13 @@
       }
     }
   })
-  var shoot = function(snap_id){
+  var shoot = function(snap_id, late){
     if (!isRaspicam) {
       if (!camera) {
         connectToCamera()
-        on_error(er)
+        //on_error(er)
       } else {
-        var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + '-XXXXXXX'
+        var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + '-' + late + '-XXXXXXX'
         return camera.takePicture({
           download: true,
           targetPath: path.join('/tmp/snaps/' + filename)
@@ -415,11 +424,12 @@
             console.log('emit')
             spaceBro.emit('image-saved', {
               // path to download file
-              src: 'http://' + ip.address() + ':' + settings.webport + '/' + path.basename(data) + '.jpg',
+              src: 'http://' + host + ':' + settings.webport + '/' + path.basename(data) + '.jpg',
               // number of the camera in the 3-6-flip
               number: settings.cameraNumber,
               // unique id of the shooting
-              album_name: snap_id
+              album_name: snap_id,
+              late: late
             })
 
           // console.log('lastPicture: ' + lastPicture)
@@ -471,7 +481,7 @@
         timer.setTimeout(function() {
           var datelog = moment()
           console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-          shoot(data.albumId)
+          shoot(data.albumId, datelog-date)
         }, [timer], delay + 'm')
       }
     }
@@ -822,30 +832,34 @@
     } else {
       preview_listeners.push(res)
       if (preview_listeners.length === 1) {
+        index_stream++
         return camera.takePicture({
-          preview: true
-        }, function (er, data) {
-          var d, listener, tmp, _i, _len, _results
-          logRequests()
-          tmp = preview_listeners
-          preview_listeners = []
-          d = Date.parse(new Date())
-          _results = []
-          for (_i = 0, _len = tmp.length; _i < _len; _i++) {
-            listener = tmp[_i]
-            if (!er) {
-              listener.writeHead(200, {
-                'Content-Type': 'image/' + req.params.format,
-                'Content-Length': data.length
-              })
-              listener.write(data)
-            } else {
-              listener.writeHead(500)
+          preview: true,
+          targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
+        }, function (er, path) {
+          fs.readFile(path, function (er, data) {
+            var d, listener, tmp, _i, _len, _results
+            logRequests()
+            tmp = preview_listeners
+            preview_listeners = []
+            d = Date.parse(new Date())
+            _results = []
+            for (_i = 0, _len = tmp.length; _i < _len; _i++) {
+              listener = tmp[_i]
+              if (!er) {
+                listener.writeHead(200, {
+                  'Content-Type': 'image/' + req.params.format,
+                  'Content-Length': data.length
+                })
+                listener.write(data)
+              } else {
+                listener.writeHead(500)
+              }
+              _results.push(listener.end())
             }
-            _results.push(listener.end())
-          }
-          return _results
-        })
+            return _results
+            })
+          })
       }
     }
   })
@@ -854,6 +868,6 @@
     console.error('warning ' + er.stack)
   })
 
-  app.listen(process.env.PORT || settings.webport, ip.address())
-  console.log('Serving on http://'+ip.address()+':'+settings.webport)
+  app.listen(process.env.PORT || settings.webport, host)
+  console.log('Serving on http://'+host+':'+settings.webport)
 }).call(this)
