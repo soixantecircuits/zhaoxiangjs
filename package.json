@@ -21,7 +21,6 @@
     "moment": "^2.14.1",
     "nanotimer": "^0.3.14",
     "node-osc": "^0.3.0",
-    "node-schedule": "^1.1.1",
     "raspicam": "troyth/node-raspicam",
     "request": "^2.53.0",
     "segfault": "^0.3.0",

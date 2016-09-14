@@ -21,7 +21,6 @@
   var utils = require('./utils')
   var exec = require('child_process').exec
   var program = require('commander')
-  var schedule = require('node-schedule')
   var moment = require('moment')
   var NanoTimer = require('nanotimer')
 
@@ -461,21 +460,6 @@
       if (date < moment()) {
         shoot(data.albumId)
       } else {
-        /*
-        schedule.scheduleJob(date.toDate(), function(){
-          shoot(data.albumId)
-          var datelog = moment()
-          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-        })
-        */
-
-        /*
-        setTimeout( function(){
-          shoot(data.albumId)
-          var datelog = moment()
-          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-        }, date - moment() )
-        */
         var timer = new NanoTimer();
         var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
         timer.setTimeout(function() {
