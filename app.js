@@ -808,7 +808,41 @@
     // return res.send(404, 'Stream already started')
     }
   })
+  app.get('/api/preview/:format', function (req, res) {
+    if (!camera) {
+        connectToCamera()
+      return res.send(404, 'Camera not connected')
+    } else {
+        index_stream++
+        console.log("take preview")
+        return camera.takePicture({
+          preview: true,
+          targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
+        }, function (er, path) {
+          if (!er && path != undefined) {
+            console.log("read image", path)
+            fs.readFile(path, function (er, data) {
+                if (!er) {
+                  res.writeHead(200, {
+                    'Content-Type': 'image/' + req.params.format,
+                    'Content-Length': data.length
+                  })
+                  res.write(data)
+                  console.log("reply")
+                } else {
+                  res.writeHead(500)
+                }
+            })
+          } else {
+            console.log("preview error", path)
+            return res.sendStatus(503)
+          }
+        })
+      }
+  })
 
+/*
+// preview with many listeners, as seen in node-gphoto2 example
   app.get('/api/preview/:format', function (req, res) {
     if (!camera) {
         connectToCamera()
@@ -847,7 +881,7 @@
       }
     }
   })
-
+*/
   process.on('uncaughtException', function (er) {
     console.error('warning ' + er.stack)
   })
