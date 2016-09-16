@@ -832,12 +832,12 @@
     }
   })
   app.get('/api/preview/:format', function (req, res) {
+    console.log("take preview")
     if (!camera) {
         connectToCamera()
       return res.send(404, 'Camera not connected')
     } else {
         index_stream++
-        console.log("take preview")
         return camera.takePicture({
           preview: true,
           targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
@@ -846,14 +846,19 @@
             console.log("read image", path)
             fs.readFile(path, function (er, data) {
                 if (!er) {
+                  console.log("reply")
+                  res.header('Content-Type', 'image/' + req.params.format)
+                  return res.send(data)
+                  /*
                   res.writeHead(200, {
                     'Content-Type': 'image/' + req.params.format,
                     'Content-Length': data.length
                   })
-                  res.write(data)
                   console.log("reply")
+                  return res.send(data)
+                  */
                 } else {
-                  res.writeHead(500)
+                  return res.writeHead(500)
                 }
             })
           } else {
