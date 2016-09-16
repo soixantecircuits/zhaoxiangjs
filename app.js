@@ -188,7 +188,7 @@
     settings.cameraNumber = coeff * settings.cameraNumber + offset
     console.log("camera number: " + settings.cameraNumber)
   }
-  if (settings.cameraNumber === 'undefined') {
+  if (settings.cameraNumber === 'undefined' || settings.cameraNumber == null) {
       settings.cameraNumber = -1
   }
   if (!settings.webport) {
@@ -225,6 +225,7 @@
   var on_error = function (er) {
     // TODO: socketio error retrieve, to see it in the logs of nuwa
     last_error = er
+    sendStatus()
     console.log('error code: ' + er)
     if (last_error == -7) {
       // console.error("Can't connect to camera, exiting")
@@ -309,6 +310,7 @@
               camera = onecamera
               console.log('Selected camera with kernel : ' + settings.kernel)
               console.log('on port: ' + onecamera.port)
+              setTimeout(function() { sendStatus()}, 300)
             }
           })
         }
@@ -323,6 +325,7 @@
             camera = onecamera
             console.log('Selected camera: ' + id_camera)
             console.log('on port: ' + onecamera.port)
+            setTimeout(function() { sendStatus()}, 300)
           } else {
             return
           }
@@ -454,6 +457,14 @@
 
   }
 
+  spaceBro.on('connect', function (data) {
+    sendStatus()
+  })
+
+  spaceBro.on('getStatus', function (data) {
+    sendStatus()
+  })
+
   spaceBro.on('shoot', function (data) {
     if (data.atTime) {
       var date = moment(data.atTime)
@@ -479,6 +490,28 @@
       shoot(data)
     }
   })
+
+  var getStatus = function() {
+    var model = 'Not connected'
+    if (camera)
+      model = camera.model
+    var camera_stuck = false
+    if (last_error == -7)
+      camera_stuck = true
+    var data = {
+      number: settings.cameraNumber,
+      camera: model,
+      isStreaming: is_streaming,
+      last_error: last_error,
+      camera_stuck: camera_stuck,
+      api: 'http://'+host+':'+settings.webport
+    }
+    return data
+  }
+
+  var sendStatus = function() {
+    spaceBro.emit('status', getStatus())
+  }
 
   app = express()
 
@@ -532,19 +565,7 @@
   }
 
   app.get('/api/status', function (req, res) {
-    var model = 'Not connected'
-    if (camera)
-      model = camera.model
-    var camera_stuck = false
-    if (last_error == -7)
-      camera_stuck = true
-    var status = {
-      camera: model,
-      isStreaming: is_streaming,
-      last_error: last_error,
-      camera_stuck: camera_stuck
-    }
-    res.status(200).json(status)
+    res.status(200).json(getStatus())
   })
 
   app.get('/api/shoot/', function (req, res) {
@@ -715,6 +736,7 @@
         connectToCamera()
         return res.send(404, 'Camera not connected')
       } else {
+        console.log('received new json settings')
         var _settings = JSON.parse(req.body.settings)
         camera.getConfig(function (err, settings) {
           if (err) {
@@ -736,6 +758,7 @@
               }
             }
           }
+          console.log('settings written')
           return res.sendStatus(200)
         })
       }
