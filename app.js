@@ -223,20 +223,24 @@
   // utils.slackit()
 
   var on_error = function (er) {
-    // TODO: socketio error retrieve, to see it in the logs of nuwa
-    last_error = er
-    sendStatus()
-    console.log('error code: ' + er)
-    if (last_error == -7) {
-      // console.error("Can't connect to camera, exiting")
-      // process.exit(-1)
+    if (!er) er = 0
+    if (last_error != er) {
+      // TODO: socketio error retrieve, to see it in the logs of nuwa
+      last_error = er
+      sendStatus()
+      console.log('error code: ' + er)
+      if (last_error == -7) {
+        // console.error("Can't connect to camera, exiting")
+        // process.exit(-1)
+      }
+      else if (last_error == -1) {
+        //console.error('Exiting because -1 error causes an error of retrieving the last picture at next shoot')
+        //process.exit(-1)
+        setTimeout(function(){process.exit(-1);}, 300)
+      }
+      //slackit(er)
+      // setTimeout(function(){process.exit(-1);},1000)
     }
-    else if (last_error == -1) {
-      //console.error('Exiting because -1 error causes an error of retrieving the last picture at next shoot')
-      process.exit(-1)
-    }
-    //slackit(er)
-  // setTimeout(function(){process.exit(-1);},1000)
   }
 
   var setSetting = function (param, value) {
@@ -398,8 +402,8 @@
           download: true,
           targetPath: '/tmp/snaps/snap-' + '-XXXXXXX'
         }, function (er, data) {
+          on_error(er)
           if (er) {
-            on_error(er)
           } else {
             lastPicture = data
           // console.log('lastPicture: ' + lastPicture)
@@ -412,15 +416,14 @@
     if (!isRaspicam) {
       if (!camera) {
         connectToCamera()
-        //on_error(er)
       } else {
         var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + '-' + late + '-XXXXXXX'
         return camera.takePicture({
           download: true,
           targetPath: path.join('/tmp/snaps/' + filename)
         }, function (er, data) {
+          on_error(er)
           if (er) {
-            on_error(er)
           } else {
             lastPicture = data
             console.log('emit')
@@ -577,8 +580,8 @@
         return camera.takePicture({
           targetPath: '/tmp/foo.XXXXXXX'
         }, function (er, data) {
+          on_error(er)
           if (er) {
-            on_error(er)
             return res.send(404, er)
           } else {
             lastPicture = data
@@ -616,8 +619,8 @@
         return camera.takePicture({
           targetPath: '/tmp/foo.XXXXXXX'
         }, function (er, data) {
+          on_error(er)
           if (er) {
-            on_error(er)
             return res.send(404, er)
           } else {
             lastPicture = data
@@ -675,8 +678,8 @@
         return res.send(404, 'Camera not connected')
       } else {
         camera.getConfig(function (er, settings) {
+          on_error(er)
           if (er) {
-            on_error(er)
             return res.send(404, JSON.stringify(er))
           } else {
             var setting = has(settings, req.params.name)
@@ -697,8 +700,8 @@
         return res.send(404, 'Camera not connected')
       } else {
         return camera.setConfigValue(req.params.name, req.body.newValue, function (er) {
+          on_error(er)
           if (er) {
-            on_error(er)
             return res.send(404, JSON.stringify(er))
           } else {
             return res.sendStatus(200)
@@ -796,8 +799,8 @@
       targetPath: path.join(stream_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
     // targetPath: '/tmp/stream/foo.XXXXXXX'
     }, function (er, data) {
+      on_error(er)
       if (er) {
-        on_error(er)
       } else {
         // success
       }
@@ -842,6 +845,7 @@
           preview: true,
           targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
         }, function (er, path) {
+          on_error(er)
           if (!er && path != undefined) {
             console.log("read image", path)
             fs.readFile(path, function (er, data) {
