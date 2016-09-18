@@ -412,7 +412,24 @@
       }
     }
   })
-  var shoot = function(snap_id, late){
+
+  var checkIfRawPicture = function(callback) {
+    camera.getConfig(function (er, settings) {
+      on_error(er)
+      if (er) {
+          typeof callback === 'function' && callback(er, false)
+      } else {
+        var setting = has(settings, 'imageformat')
+        if (_.values(has(setting, 'value')[0])[0] == 'RAW'){
+          typeof callback === 'function' && callback(er, true)
+        } else {
+          typeof callback === 'function' && callback(er, false)
+        }
+      }
+    })
+  }
+
+  var shoot = function(snap_id, late) {
     if (!isRaspicam) {
       if (!camera) {
         connectToCamera()
@@ -425,16 +442,25 @@
           on_error(er)
           if (er) {
           } else {
-            lastPicture = data
-            console.log('emit')
-            spaceBro.emit('image-saved', {
-              // path to download file
-              src: 'http://' + host + ':' + settings.webport + '/' + path.basename(data) + '.jpg',
-              // number of the camera in the 3-6-flip
-              number: settings.cameraNumber,
-              // unique id of the shooting
-              album_name: snap_id,
-              late: late
+
+            checkIfRawPicture( function(er, isRaw) {
+              var ext = '.jpg'
+              if (isRaw) {
+                ext = '.cr2'
+                console.log('shooting in RAW')
+              }
+              lastPicture = data
+              console.log('emit')
+              spaceBro.emit('image-saved', {
+                // path to download file
+                src: 'http://' + host + ':' + settings.webport + '/' + path.basename(data) + ext,
+                // number of the camera in the 3-6-flip
+                number: settings.cameraNumber,
+                // unique id of the shooting
+                album_name: snap_id,
+                raw: isRaw,
+                late: late
+              })
             })
 
           // console.log('lastPicture: ' + lastPicture)
@@ -469,30 +495,51 @@
   })
 
   spaceBro.on('shoot', function (data) {
-    if (data.atTime) {
-      var date = moment(data.atTime)
-      if (date < moment()) {
+    selectImageFormat( data.format, function (er) {
+      if (data.atTime) {
+        var date = moment(data.atTime)
+        if (date < moment()) {
+          shoot(data.albumId)
+        } else {
+          var timer = new NanoTimer();
+          var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
+          timer.setTimeout(function() {
+            var datelog = moment()
+            console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
+            shoot(data.albumId, datelog-date)
+          }, [timer], delay + 'm')
+        }
+      }
+      else if (data.frameDelay && data.frameDelay > 0) {
+        setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
+      } else if (data.frameDelay == 0) {
+        shoot(data.albumId)
+      } else if (data.albumId) {
         shoot(data.albumId)
       } else {
-        var timer = new NanoTimer();
-        var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
-        timer.setTimeout(function() {
-          var datelog = moment()
-          console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-          shoot(data.albumId, datelog-date)
-        }, [timer], delay + 'm')
+        shoot(data)
+      }
+    })
+  })
+
+  var selectImageFormat = function(format, callback) {
+    var value = undefined
+    if (format) {
+      if (format == 'raw' || format == 'RAW') {
+        value = 'RAW' 
+      } else if (format == 'preview' || format == 'PREVIEW') {
+        value = 'Smaller JPEG (S2)' 
       }
     }
-    else if (data.frameDelay && data.frameDelay > 0) {
-      setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
-    } else if (data.frameDelay == 0) {
-      shoot(data.albumId)
-    } else if (data.albumId) {
-      shoot(data.albumId)
+    if (value) {
+      return camera.setConfigValue('imageformat', value, function (er) {
+        on_error(er)
+        typeof callback === 'function' && callback(er)
+      })
     } else {
-      shoot(data)
+        typeof callback === 'function' && callback('No format specified or invalid value')
     }
-  })
+  }
 
   var getStatus = function() {
     var model = 'Not connected'
@@ -540,7 +587,7 @@
     return res.render('index.html')
   })
 
-  app.get(/(.*)\.jpg$/, function(req,res){
+  app.get(/(.*)\.(jpg|cr2)$/, function(req,res){
     //res.sendFile(req.params[0], {root: '/tmp/snaps'});
     fs.readFile(path.join('/tmp/snaps', req.params[0]), function (er, data) {
       if (er) {
@@ -842,7 +889,7 @@
     } else {
         index_stream++
         return camera.takePicture({
-          preview: true,
+          //preview: true,
           targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
         }, function (er, path) {
           on_error(er)
