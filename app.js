@@ -434,7 +434,9 @@
       if (!camera) {
         connectToCamera()
       } else {
-        var filename = 'snap-' + snap_id + '-' + settings.cameraNumber + '-' + late + '-XXXXXXX'
+        var cameraNumber = settings.cameraNumber
+        if (cameraNumber < 10) cameraNumber = '0' + cameraNumber
+        var filename = 'snap-' + snap_id + '-' + cameraNumber + '-' + late + '-XXXXXXX'
         return camera.takePicture({
           download: true,
           targetPath: path.join('/tmp/snaps/' + filename)
@@ -448,8 +450,9 @@
               if (isRaw) {
                 ext = '.cr2'
                 console.log('shooting in RAW')
+              } else {
+                lastPicture = data
               }
-              lastPicture = data
               console.log('emit')
               spaceBro.emit('image-saved', {
                 // path to download file
@@ -529,6 +532,8 @@
         value = 'RAW' 
       } else if (format == 'preview' || format == 'PREVIEW') {
         value = 'Smaller JPEG (S2)' 
+      } else {
+        value = format
       }
     }
     if (value) {
@@ -539,6 +544,19 @@
     } else {
         typeof callback === 'function' && callback('No format specified or invalid value')
     }
+  }
+
+  var getImageFormat = function(callback) {
+        camera.getConfig(function (er, settings) {
+          on_error(er)
+          if (er) {
+            typeof callback === 'function' && callback(er)
+          } else {
+            var setting = has(settings, 'imageformat')
+            var data = _.values(has(setting, 'value')[0])[0]
+            typeof callback === 'function' && callback(null, data)
+          }
+        })
   }
 
   var getStatus = function() {
@@ -708,14 +726,36 @@
   })
 
   app.get('/api/lastpicture/:format', function (req, res) {
-    fs.readFile(lastPicture, function (er, data) {
-      if (er) {
-        return res.send(404, er)
-      } else {
-        res.header('Content-Type', 'image/' + req.params.format)
-        return res.send(data)
-      }
-    })
+    if (lastPicture) {
+      fs.readFile(lastPicture, function (er, data) {
+        if (er) {
+          return res.send(404, er)
+        } else {
+          res.header('Content-Type', 'image/' + req.params.format)
+          return res.send(data)
+        }
+      })
+    } else {
+        return camera.takePicture({
+              //preview: true,
+              targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
+            }, function (er, path) {
+              on_error(er)
+              if (!er && path != undefined) {
+                lastPicture = path
+                fs.readFile(path, function (er, data) {
+                    if (!er) {
+                      res.header('Content-Type', 'image/' + req.params.format)
+                      return res.send(data)
+                    } else {
+                      return res.writeHead(500)
+                    }
+                })
+              } else {
+                return res.sendStatus(503)
+              }
+        })
+    }
   })
 
   app.get('/api/settings/:name', function (req, res) {
@@ -882,42 +922,47 @@
     }
   })
   app.get('/api/preview/:format', function (req, res) {
-    console.log("take preview")
     if (!camera) {
         connectToCamera()
       return res.send(404, 'Camera not connected')
     } else {
-        index_stream++
-        return camera.takePicture({
-          //preview: true,
-          targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
-        }, function (er, path) {
-          on_error(er)
-          if (!er && path != undefined) {
-            console.log("read image", path)
-            fs.readFile(path, function (er, data) {
-                if (!er) {
-                  console.log("reply")
-                  res.header('Content-Type', 'image/' + req.params.format)
-                  return res.send(data)
-                  /*
-                  res.writeHead(200, {
-                    'Content-Type': 'image/' + req.params.format,
-                    'Content-Length': data.length
-                  })
-                  console.log("reply")
-                  return res.send(data)
-                  */
-                } else {
-                  return res.writeHead(500)
-                }
+        getImageFormat(function(er, imageformat) {
+          selectImageFormat('preview', function(er) {
+            index_stream++
+            return camera.takePicture({
+              //preview: true,
+              targetPath: path.join(preview_folder, 'foo.' + zeroFill(index_stream, 7) + '.XXXXXXX')
+            }, function (er, path) {
+              on_error(er)
+              selectImageFormat(imageformat, function(er) { if(er) console.log(er)})
+              if (!er && path != undefined) {
+                console.log("read image", path)
+                lastPicture = path
+                fs.readFile(path, function (er, data) {
+                    if (!er) {
+                      console.log("reply")
+                      res.header('Content-Type', 'image/' + req.params.format)
+                      return res.send(data)
+                      /*
+                      res.writeHead(200, {
+                        'Content-Type': 'image/' + req.params.format,
+                        'Content-Length': data.length
+                      })
+                      console.log("reply")
+                      return res.send(data)
+                      */
+                    } else {
+                      return res.writeHead(500)
+                    }
+                })
+              } else {
+                console.log("preview error", path)
+                return res.sendStatus(503)
+              }
             })
-          } else {
-            console.log("preview error", path)
-            return res.sendStatus(503)
-          }
+          })
         })
-      }
+    }
   })
 
 /*
