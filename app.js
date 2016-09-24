@@ -365,7 +365,8 @@
   }
   connectToCamera()
 
-  spaceBro.connect('10.60.60.139', 8888,{
+  //spaceBro.connect('10.60.60.139', 8888,{
+  spaceBro.connect('10.0.0.18', 8888,{
     clientName: os.hostname(),
     channelName: 'zhaoxiangjs',
     /*
@@ -429,10 +430,16 @@
     })
   }
 
-  var shoot = function(snap_id, late) {
+  var shoot = function(data, callback) {
+    var snap_id = data.albumId
+    var datelog = moment()
+    console.log('shoot at ' + datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
+    var date = moment(data.atTime)
+    var late = datelog - date
     if (!isRaspicam) {
       if (!camera) {
         connectToCamera()
+        typeof callback === 'function' && callback('no camera', null)
       } else {
         var cameraNumber = settings.cameraNumber
         if (cameraNumber < 10) cameraNumber = '0' + cameraNumber
@@ -440,30 +447,27 @@
         return camera.takePicture({
           download: true,
           targetPath: path.join('/tmp/snaps/' + filename)
-        }, function (er, data) {
+        }, function (er, filepath) {
           on_error(er)
           if (er) {
+            typeof callback === 'function' && callback(er, null)
           } else {
-
             checkIfRawPicture( function(er, isRaw) {
               var ext = '.jpg'
               if (isRaw) {
                 ext = '.cr2'
                 console.log('shooting in RAW')
               } else {
-                lastPicture = data
+                lastPicture = filepath
               }
               console.log('emit')
-              spaceBro.emit('image-saved', {
-                // path to download file
-                src: 'http://' + host + ':' + settings.webport + '/' + path.basename(data) + ext,
-                // number of the camera in the 3-6-flip
-                number: settings.cameraNumber,
-                // unique id of the shooting
-                album_name: snap_id,
-                raw: isRaw,
-                late: late
-              })
+              data.src = 'http://' + host + ':' + settings.webport + '/' + path.basename(filepath) + ext
+              data.number = settings.cameraNumber
+              data.raw = isRaw
+              data.late = late
+
+              spaceBro.emit('image-saved', data)
+              typeof callback === 'function' && callback(null, data)
             })
 
           // console.log('lastPicture: ' + lastPicture)
@@ -488,6 +492,29 @@
     }
 
   }
+  var shootOnTime = function (data, callback) {
+      if (data.atTime) {
+        var date = moment(data.atTime)
+        if (date < moment()) {
+          shoot(data.albumId)
+        } else {
+          var timer = new NanoTimer();
+          var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
+          timer.setTimeout(function() {
+            shoot(data, callback)
+          }, [timer], delay + 'm')
+        }
+      }
+      else if (data.frameDelay && data.frameDelay > 0) {
+        setTimeout(function(){shoot(data.albumId, callback)}, (settings.cameraNumber - 1) * data.frameDelay)
+      } else if (data.frameDelay == 0) {
+        shoot(data.albumId, callback)
+      } else if (data.albumId) {
+        shoot(data.albumId, callback)
+      } else {
+        shoot(data, callback)
+      }
+  }
 
   spaceBro.on('connect', function (data) {
     sendStatus()
@@ -498,31 +525,18 @@
   })
 
   spaceBro.on('shoot', function (data) {
-    selectImageFormat( data.format, function (er) {
-      if (data.atTime) {
-        var date = moment(data.atTime)
-        if (date < moment()) {
-          shoot(data.albumId)
-        } else {
-          var timer = new NanoTimer();
-          var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
-          timer.setTimeout(function() {
-            var datelog = moment()
-            console.log(datelog.format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
-            shoot(data.albumId, datelog-date)
-          }, [timer], delay + 'm')
-        }
-      }
-      else if (data.frameDelay && data.frameDelay > 0) {
-        setTimeout(function(){shoot(data.albumId)}, (settings.cameraNumber - 1) * data.frameDelay)
-      } else if (data.frameDelay == 0) {
-        shoot(data.albumId)
-      } else if (data.albumId) {
-        shoot(data.albumId)
-      } else {
-        shoot(data)
-      }
-    })
+    if (data.preview) {
+      console.log ("shoot a preview")
+      getImageFormat(function(er, imageformat) {
+        selectImageFormat('preview', function(er) {
+          shootOnTime(data, function (er) {
+            selectImageFormat(imageformat, function(er) { if(er) console.log(er)})
+          })
+        })
+      })
+    } else {
+      shootOnTime(data)
+    }
   })
 
   var selectImageFormat = function(format, callback) {
