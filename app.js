@@ -496,7 +496,7 @@
       if (data.atTime) {
         var date = moment(data.atTime)
         if (date < moment()) {
-          shoot(data.albumId)
+          shoot(data)
         } else {
           var timer = new NanoTimer();
           var delay = (date - moment()) + (settings.cameraNumber - 1) * data.frameDelay
@@ -508,11 +508,12 @@
       else if (data.frameDelay && data.frameDelay > 0) {
         setTimeout(function(){shoot(data.albumId, callback)}, (settings.cameraNumber - 1) * data.frameDelay)
       } else if (data.frameDelay == 0) {
-        shoot(data.albumId, callback)
-      } else if (data.albumId) {
-        shoot(data.albumId, callback)
-      } else {
         shoot(data, callback)
+      } else if (data.albumId) {
+        shoot(data, callback)
+      } else {
+        // legacy
+        shoot({albumId: data}, callback)
       }
   }
 
