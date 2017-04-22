@@ -32,7 +32,7 @@
   // TODO: recognize options, -f is for no camera
   var argv = require('minimist')(process.argv.slice(2))
   var lastPicture
-  var is_streaming = false
+  var is_streaming = true
   var stream_folder = '/tmp/stream/'
   var preview_folder = '/tmp/preview/'
   var last_error = 0
@@ -1025,6 +1025,6 @@
     console.error('warning ' + er.stack)
   })
 
-  app.listen(process.env.PORT || settings.webport, host)
+  app.listen(process.env.PORT || settings.webport)
   console.log('Serving on http://'+host+':'+settings.webport)
 }).call(this)
